@@ -7,3 +7,9 @@ export async function findAll() {
   return rows
 }
 
+export async function findOne(args, value) {
+  const { rows } = await pool.query(
+    `SELECT id, name FROM brands WHERE ${args} = ${value}`
+  )
+  return rows[0]
+}
