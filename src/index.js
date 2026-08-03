@@ -1,5 +1,5 @@
 import express from "express" 
-
+import router from "./routes/index.js";
 const app = express(); 
 
 app.get("/ping", (req, res) => { 
@@ -8,6 +8,10 @@ app.get("/ping", (req, res) => {
     "message": "Pong"
   })
 })
+app.use(express.json()) 
+app.use(express.urlencoded({extended: true}))
+app.use(router)
+
 
 const PORT = 2222; 
 app.listen(PORT, () => { 
