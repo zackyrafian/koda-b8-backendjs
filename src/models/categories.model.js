@@ -27,3 +27,10 @@ export async function remove(id) {
   )
   return rows[0];
 }
+
+export async function update(id, name) { 
+  const { rows } = await pool.query(
+    `UPDATE categories SET name = COALESCE($2, name), updated_at = NOW() WHERE id = $1 RETURNING *`, [id, name ?? null]
+  ) 
+  return rows[0] || null;
+}

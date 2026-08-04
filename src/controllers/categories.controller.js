@@ -91,3 +91,35 @@ export async function remove (req, res) {
     return
   }
 }
+
+export async function update(req, res) { 
+  const { id } = req.params; 
+  const { name } = req.body; 
+  try { 
+    if (!name) { 
+      res.status(400).json({ 
+        "success": false, 
+        "message": "Required name"
+      })
+      return;
+    }
+    const category = categoriesModels.update(id, name)
+    if (!category) { 
+      res.status(404).json({ 
+        "success": false, 
+        "message": `Category id ${id} not found.`
+      })
+      return;
+    }
+    res.status(200).json({ 
+      "success": true, 
+      "messsage": `Category ${id} update.`
+    })
+  } catch (error) {
+    res.status(500).json({ 
+      "success": false, 
+      "message": error.message
+    })
+    return;
+  }
+}
