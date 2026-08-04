@@ -34,3 +34,9 @@ export async function findAll(user_id) {
   return rows;
 }
 
+export async function findOne(user_id, args, value) {
+  const { rows } = await pool.query(
+    `SELECT * FROM user_address WHERE user_id = $1 AND ${args} = $2`, [user_id, value]
+  )
+  return rows[0];
+}
