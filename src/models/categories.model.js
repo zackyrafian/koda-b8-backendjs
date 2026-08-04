@@ -1,0 +1,36 @@
+import { pool } from "../config/postgres.js";
+
+export async function findAll() {
+  const { rows } = await pool.query(
+    `SELECT id, name FROM categories` 
+  )
+  return rows;
+}
+
+export async function findOne(args, value) { 
+  const { rows } = await pool.query(
+    `SELECT id, name FROM categories WHERE ${args} = ${value}`
+  )
+  return rows[0];
+}
+
+export async function create(name) { 
+  const { rows } = await pool.query(
+    `INSERT INTO categories (name) VALUES ($1)`, [name]
+  )
+  return rows[0];
+}
+
+export async function remove(id) { 
+  const { rows } = await pool.query(
+    `DELETE FROM categories WHERE id = $1`, [id]
+  )
+  return rows[0];
+}
+
+export async function update(id, name) { 
+  const { rows } = await pool.query(
+    `UPDATE categories SET name = COALESCE($2, name), updated_at = NOW() WHERE id = $1 RETURNING *`, [id, name ?? null]
+  ) 
+  return rows[0] || null;
+}
