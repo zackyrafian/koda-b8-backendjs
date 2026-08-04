@@ -26,3 +26,11 @@ export async function create(user_id ,request) {
   )
   return rows[0];
 }
+
+export async function findAll(user_id) { 
+  const { rows } = await pool.query(
+    `SELECT * FROM user_address WHERE user_id = $1`, [user_id]
+  )
+  return rows;
+}
+
