@@ -12,6 +12,7 @@ export async function getAll(req, res) {
       "success": false, 
       "message": error.message
     })
+    return
   }
 }
 
@@ -37,6 +38,7 @@ export async function getById(req, res) {
       "success": false, 
       "message": error.message
     })
+    return
   }
 }
 
