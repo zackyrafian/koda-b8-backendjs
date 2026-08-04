@@ -37,3 +37,26 @@ export async function getById(req, res) {
     })
   }
 }
+
+export async function create(req, res) { 
+  const { name } = req.body; 
+  try { 
+    if (!name) { 
+      return req.status(400).json({
+        "success": false, 
+        "message": "Required name"
+      })
+    }
+    const brand = await brandsModels.create(name) 
+    res.status(201).json({ 
+      "success": true, 
+      "messsage": `Successfully added ${brand.name}`,
+      "result": brand
+    })
+  } catch (error) { 
+    res.status(500).json({ 
+      "success": false, 
+      "message": error.message
+    })
+  }
+}
