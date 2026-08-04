@@ -5,5 +5,6 @@ const categoriesRouter = Router()
 
 categoriesRouter.get("/", categoriesController.getAll)
 categoriesRouter.get('/:id', categoriesController.getById)
+categoriesRouter.post('/', categoriesController.create)
 
 export default categoriesRouter

@@ -13,3 +13,10 @@ export async function findOne(args, value) {
   )
   return rows[0];
 }
+
+export async function create(name) { 
+  const { rows } = await pool.query(
+    `INSERT INTO categories (name) VALUES ($1)`, [name]
+  )
+  return rows[0];
+}

@@ -39,3 +39,28 @@ export async function getById(req, res) {
     })
   }
 }
+
+export async function create(req, res) { 
+  const { name } = req.body;
+  try { 
+    if (!name) { 
+      res.status(400).json({ 
+        "success": false, 
+        "message": "Required name"
+      })
+      return
+    }
+    await categoriesModels.create(name)
+
+    res.status(201).json({ 
+      "success": true, 
+      "message": `Category ${name} created.`
+    })
+  } catch (error) { 
+    res.status(500).json({
+      "success": false, 
+      "message": error.message
+    })
+    return;
+  }
+}
