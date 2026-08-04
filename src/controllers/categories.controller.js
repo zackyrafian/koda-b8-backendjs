@@ -66,3 +66,28 @@ export async function create(req, res) {
     return;
   }
 }
+
+export async function remove (req, res) { 
+  const { id } = req.params; 
+  try { 
+    const category = categoriesModels.remove(id)
+    if (!category) { 
+      res.status(404).json({ 
+        "success": false, 
+        "message": ""
+      })
+      return
+    }
+
+    res.status(200).json({ 
+      "success": true, 
+      "message": ""
+    })
+  } catch (error) {
+    res.status(500).json({ 
+      "success": false, 
+      "message" : error.message
+    })
+    return
+  }
+}
