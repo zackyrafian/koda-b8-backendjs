@@ -85,3 +85,35 @@ export async function remove(req, res) {
     })
   }
 }
+
+export async function edit(req, res) { 
+  const { id } = req.params; 
+  try { 
+    const { name } = req.body;
+    if (!name) { 
+      res.status(400).json({ 
+        "success": false, 
+        "message": "Required Name"
+      })
+      return
+    }
+    const brand = await brandsModels.edit(id, name)
+    if (!brand) { 
+      res.status(404).json({ 
+        "success": false, 
+        "message": `Brand ${id} not found.`
+      })
+      return
+    }
+
+    res.status(200).json({ 
+      "success": true, 
+      "message": `Brands ${id}`
+    })
+  } catch (error) { 
+    res.status(500).json({ 
+      "success": false, 
+      "message": error.message
+    })
+  }
+}
