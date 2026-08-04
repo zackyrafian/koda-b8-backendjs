@@ -34,3 +34,26 @@ export async function create(req, res) {
     })
   }
 }
+
+export async function getAll(req, res) { 
+  const user_id = req.user.userId 
+  try { 
+    const address = await userAddressModel.findAll(user_id)
+    if (!address) { 
+      res.status(404).json({ 
+        "success": false, 
+        "message": "-> 404"
+      })
+      return
+    } 
+    res.status(200).json({ 
+      "success": true, 
+      "results": address
+    })
+  } catch (error) { 
+    res.status(500).json({
+      "success": false, 
+      "message": error.message
+    })
+  }
+}
