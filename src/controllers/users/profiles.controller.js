@@ -24,3 +24,25 @@ export async function getUserProfile(req, res) {
   }
 }
 
+export async function profileImage(req, res) { 
+  const user_id = parseInt(req.user.userId)
+  const file = req.file 
+  try { 
+    await userModel.updateProfile(user_id, { 
+      picture_path: file.path,
+    })
+
+    res.status(200).json({ 
+      "success": true, 
+      "message": "Success added profile user profile.",
+      "data": { 
+        "filename": file.path
+      }
+    })
+  } catch (error) { 
+    res.status(500).json({ 
+      "success": false, 
+      "message": error.message
+    })
+  }
+}
