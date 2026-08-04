@@ -57,3 +57,33 @@ export async function getAll(req, res) {
     })
   }
 }
+
+export async function getById(req, res) { 
+  const { id } = req.params
+  const user_id = req.user.userId 
+  if (!id || isNaN(id)) { 
+    res.status(400).json({ 
+      "success": false, 
+      "message": "invalid id"
+    })
+    return
+  }
+  try { 
+    const address = await userAddressModel.findOne(user_id, "id", id)
+    if (!address) { 
+      return res.status(404).json({ 
+        "success": false,
+        "message": "Address not found."
+      })
+    }
+    res.status(200).json({ 
+      "success": true,
+      "result": address
+    })
+  } catch (error) { 
+    res.status(500).json({ 
+      "success": false, 
+      "message": error.message
+    })
+  }
+}
