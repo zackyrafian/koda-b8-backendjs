@@ -20,3 +20,10 @@ export async function create(name) {
   )
   return rows[0]
 }
+
+export async function remove(id) { 
+  const { rows } = await pool.query(
+    `DELETE FROM brands WHERE id = $1 RETURNING *`, [id]
+  )
+  return rows[0];
+}

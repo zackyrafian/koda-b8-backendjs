@@ -6,4 +6,5 @@ const brandRouter = Router();
 brandRouter.get("/", brandsController.getAll)
 brandRouter.get("/:id", brandsController.getById)
 brandRouter.post('/', brandsController.create)
+brandRouter.delete("/:id", brandsController.remove)
 export default brandRouter;

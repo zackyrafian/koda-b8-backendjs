@@ -60,3 +60,28 @@ export async function create(req, res) {
     })
   }
 }
+
+export async function remove(req, res) { 
+  const { id } = req.params; 
+  const brand = brandsModels.remove(id)
+  console.log(brandRouter)
+  
+  try { 
+    if (!brand) { 
+      res.status(404).json({ 
+        "success": false, 
+        "message" : `Brand with ${id} not found.`
+      })
+    }
+
+    res.status(200).json({ 
+      "success": true, 
+      "message": `Brand ${brand.name} deleted.`
+    })
+  } catch (error) { 
+    res.status(500).json({ 
+      "success": false, 
+      "message": error.message
+    })
+  }
+}
