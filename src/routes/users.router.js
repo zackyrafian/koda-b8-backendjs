@@ -19,5 +19,6 @@ usersRouter.get("/orders/:id", authMiddleware, userOrdersController.getOne)
 
 usersRouter.post("/address", authMiddleware, userAddressController.create)
 usersRouter.get("/address", authMiddleware, userAddressController.getAll)
+usersRouter.get("/address/:id", authMiddleware, userAddressController.getById)
 
 export default usersRouter
