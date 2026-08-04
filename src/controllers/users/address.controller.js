@@ -1,3 +1,5 @@
+import * as userAddressModel from "../../models/users/address.model.js"
+
 export async function create(req, res) {
   const user_id = req.user.userId 
   const {
@@ -20,9 +22,10 @@ export async function create(req, res) {
     zip_code
   }
   try { 
+    await userAddressModel.create(user_id, request)
     res.status(200).json({ 
       "success": true, 
-      "message": "Success added address."
+      "message": "Success added address.",
     })
   } catch (error) { 
     res.status(500).json({ 
