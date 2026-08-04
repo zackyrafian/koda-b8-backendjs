@@ -5,6 +5,6 @@ import uploadMiddleware from "../middleware/upload.middleware.js";
 
 const usersRouter = Router()
 usersRouter.get("/profile", authMiddleware, userController.getUserProfile)
-usersRouter.patch("/profile/picture", uploadMiddleware, authMiddleware, userController.profileImage)
+usersRouter.patch("/profile/picture", uploadMiddleware("picture"), authMiddleware, userController.profileImage)
 
 export default usersRouter
