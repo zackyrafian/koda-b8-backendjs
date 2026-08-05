@@ -1,9 +1,7 @@
 FROM node:alpine
-WORKDIR /webservices 
-
-COPY package*.json ./ 
-RUN npm install 
-COPY apps/api ./apps/api
+WORKDIR /app
+COPY ./package*.json .
+RUN npm i
+COPY . .
 EXPOSE 8080
-CMD ["npm", "run", "dev"]
-
+CMD [ "node", "./src/index.js" ]
