@@ -1,0 +1,6 @@
+CREATE TABLE user_wishlists(
+  id BIGSERIAL PRIMARY KEY, 
+  user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+  product_id BIGINT REFERENCES products(id) ON DELETE CASCADE,
+  created_at TIMESTAMP DEFAULT NOW()
+);

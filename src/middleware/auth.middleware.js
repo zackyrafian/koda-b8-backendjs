@@ -10,6 +10,13 @@ function authMiddleware(req, res, next) {
   const authHeader = req.header("Authorization")
   const prefix = "Bearer "
 
+  if (!authHeader) { 
+    return res.status(401).json({ 
+      "sucesss": false, 
+      "message": "401"
+    })
+  }
+
   if (authHeader.startsWith(prefix)) { 
     try { 
       const token = authHeader.slice(prefix.length)
