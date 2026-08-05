@@ -9,13 +9,27 @@ export async function create(user_id, product_id, quantity) {
 
 export async function findAll(user_id) { 
   const { rows } = await pool.query(
-    `SELECT uc.id, uc.user_id, uc.product_id, uc.quantity, uc.created_at, uc.updated_at, json_build_object(
-    'id', p.id,
-    'name', p.name,
-    'price', p.price
-    ) as product FROM user_carts as uc
-    JOIN products as p ON uc.product_id = p.id
-    WHERE user_id = $1 ORDER BY uc.created_at DESC`, [user_id]
+    `SELECT 
+      uc.id,
+      uc.user_id,
+      uc.product_id,
+      uc.quantity,
+      uc.created_at,
+      uc.updated_at,
+      p.name,
+      p.price,
+      COALESCE(
+        (SELECT json_agg(pi.url ORDER BY pi.id)
+         FROM product_images pi
+         WHERE pi.product_id = p.id),
+        '[]'
+      ) AS images,
+      (SELECT pv.name FROM product_variants pv WHERE pv.product_id = p.id LIMIT 1) AS variant
+    FROM user_carts AS uc
+    JOIN products AS p ON uc.product_id = p.id
+    WHERE uc.user_id = $1
+    ORDER BY uc.created_at DESC`,
+    [user_id]
   )
   return rows;
 }
@@ -29,6 +43,16 @@ export async function findById(cart_id, user_id) {
     [cart_id, user_id]
   )
   return rows;
+}
+
+export async function updateQuantity(cart_id, user_id, quantity) {
+  const { rows } = await pool.query(
+    `UPDATE user_carts SET quantity = $1, updated_at = NOW()
+     WHERE id = $2 AND user_id = $3
+     RETURNING *`,
+    [quantity, cart_id, user_id]
+  )
+  return rows[0];
 }
 
 export async function deleteById(cart_id, user_id) { 

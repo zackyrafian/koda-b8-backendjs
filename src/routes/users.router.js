@@ -12,6 +12,8 @@ usersRouter.patch("/profile/picture", uploadMiddleware("picture"), authMiddlewar
 
 usersRouter.post("/cart", authMiddleware, userCartController.create)
 usersRouter.get("/cart", authMiddleware, userCartController.getAll)
+usersRouter.patch("/cart/:id", authMiddleware, userCartController.updateQuantity)
+usersRouter.delete("/cart/:id", authMiddleware, userCartController.remove)
 
 usersRouter.post("/orders", authMiddleware, userOrdersController.create)
 usersRouter.get("/orders", authMiddleware, userOrdersController.getAll)
