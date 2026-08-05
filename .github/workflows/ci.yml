@@ -1,4 +1,4 @@
-name: CI/CD Andromeda Backend
+name: CI/CD BeliMudah Backend
 run-name: "${{ github.actor }}'s Backend workflow"
 
 on:
@@ -23,13 +23,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build image
+      - name: Build and push image
         run: |
-          docker build -t ghcr.io/${{ github.repository }}/belimudah-be:latest .
-
-      - name: Push image
-        run: |
-          docker push ghcr.io/${{ github.repository }}/belimudah-be:latest
+          IMAGE=$(echo "ghcr.io/${{ github.repository }}/belimudah-be" | tr '[:upper:]' '[:lower:]')
+          docker build -t "$IMAGE:${{ github.ref_name }}" -t "$IMAGE:latest" .
+          docker push --all-tags "$IMAGE"
 
   deploy-to-server:
     needs: build-image
