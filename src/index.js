@@ -20,6 +20,8 @@ try {
   process.exit(1);
 }
 
+console.log(process.env.CLIENT_URL)
+
 app.use(express.json()) 
 app.use(express.urlencoded({ extended: true }))
 app.use(corsMiddleware)
