@@ -1,6 +1,7 @@
 import express from "express" 
 import router from "./routes/index.js";
 import { pool } from "./config/postgres.js";
+import 'dotenv/config'
 import corsMiddleware from "./middleware/cors.middleware.js";
 const app = express(); 
 
@@ -21,7 +22,6 @@ try {
 }
 
 console.log(process.env.CLIENT_URL)
-
 app.use(express.json()) 
 app.use(express.urlencoded({ extended: true }))
 app.use(corsMiddleware)
