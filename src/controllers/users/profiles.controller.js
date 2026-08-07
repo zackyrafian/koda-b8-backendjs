@@ -26,17 +26,26 @@ export async function getUserProfile(req, res) {
 
 export async function profileImage(req, res) { 
   const user_id = parseInt(req.user.userId)
-  const file = req.file 
+  const { file } = req 
+  const { body } = req; 
+  // console.log(req.file)
+  // console.log(req.body)
+  console.log(body)
   try { 
-    await userModel.updateProfile(user_id, { 
-      picture_path: file.path,
+    await userModel.updateProfile(user_id, {
+      fullname: body.fullname,
+      email: body.email, 
+      phone_number: body.phone_number,
+      date_of_birth: body.date_of_birth, 
+      gender: body.gender,
+      picture_path: file?.path,
     })
 
     res.status(200).json({ 
       "success": true, 
       "message": "Success added profile user profile.",
       "data": { 
-        "filename": file.path
+        "filename": file?.path
       }
     })
   } catch (error) { 

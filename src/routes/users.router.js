@@ -8,7 +8,7 @@ import uploadMiddleware from "../middleware/upload.middleware.js";
 
 const usersRouter = Router()
 usersRouter.get("/profile", authMiddleware, userProfileController.getUserProfile)
-usersRouter.patch("/profile/picture", uploadMiddleware("picture"), authMiddleware, userProfileController.profileImage)
+usersRouter.patch("/profile", uploadMiddleware("picture"), authMiddleware, userProfileController.profileImage)
 
 usersRouter.post("/cart", authMiddleware, userCartController.create)
 usersRouter.get("/cart", authMiddleware, userCartController.getAll)
