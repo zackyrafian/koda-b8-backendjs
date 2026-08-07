@@ -1,4 +1,5 @@
 import express from "express" 
+import morgan from "morgan";
 import router from "./routes/index.js";
 import { pool } from "./config/postgres.js";
 import 'dotenv/config'
@@ -21,7 +22,13 @@ try {
   process.exit(1);
 }
 
+app.use(
+  morgan("[:date[iso]] :remote-addr :method :url :status :response-time ms"),
+);
+
+
 console.log(process.env.CLIENT_URL)
+app.use('/images', express.static('images'))
 app.use(express.json()) 
 app.use(express.urlencoded({ extended: true }))
 app.use(corsMiddleware)
