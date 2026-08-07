@@ -22,10 +22,14 @@ export async function create(req, res) {
     zip_code
   }
   try { 
-    await userAddressModel.create(user_id, request)
+    const address = await userAddressModel.create(user_id, request)
+    console.log(address)
     res.status(200).json({ 
       "success": true, 
       "message": "Success added address.",
+      "result": { 
+        id: address.id
+      }
     })
   } catch (error) { 
     res.status(500).json({ 

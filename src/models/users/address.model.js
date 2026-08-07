@@ -13,7 +13,7 @@ export async function create(user_id ,request) {
       zip_code,
       created_at,
       updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())`, [
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW()) RETURNING id`, [
     user_id,
     request.recipient_name,
     request.phone_number,
