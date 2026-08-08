@@ -31,9 +31,10 @@ export async function profileImage(req, res) {
   // console.log(req.file)
   // console.log(req.body)
   console.log(body)
+  console.log(body.fullname)
   try { 
     await userModel.updateProfile(user_id, {
-      fullname: body.fullname,
+      fullname: body.full_name,
       email: body.email, 
       phone_number: body.phone_number,
       date_of_birth: body.date_of_birth, 
