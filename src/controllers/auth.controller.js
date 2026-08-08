@@ -65,7 +65,8 @@ export async function loign(req, res) {
     }
 
     const token = libJWT.sign({ 
-      userId: user.id
+      userId: user.id,
+        role: user.role
     })
     res.status(200).json({ 
       "success": true,

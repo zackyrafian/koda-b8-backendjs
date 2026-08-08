@@ -31,7 +31,7 @@ export async function create({ fullname, email, password }) {
 
 export async function findOne(args, value) { 
   const data = await pool.query(
-    `SELECT id, email, password FROM users WHERE ${args} = $1`, [value] 
+    `SELECT id, email, role, password FROM users WHERE ${args} = $1`, [value] 
   )
   return data.rows[0]
 }
