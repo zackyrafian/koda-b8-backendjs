@@ -2,6 +2,7 @@ import * as userProfileController from "../controllers/users/profiles.controller
 import * as userCartController from "../controllers/users/cart.controller.js"
 import * as userOrdersController from "../controllers/users/orders.controller.js"
 import * as userAddressController from "../controllers/users/address.controller.js"
+import * as userInformationController from "../controllers/users/users.controller.js"
 import { Router } from "express";
 import authMiddleware from "../middleware/auth.middleware.js";
 import uploadMiddleware from "../middleware/upload.middleware.js";
@@ -22,5 +23,7 @@ usersRouter.get("/orders/:id", authMiddleware, userOrdersController.getOne)
 usersRouter.post("/address", authMiddleware, userAddressController.create)
 usersRouter.get("/address", authMiddleware, userAddressController.getAll)
 usersRouter.get("/address/:id", authMiddleware, userAddressController.getById)
+
+usersRouter.get("/info", authMiddleware, userInformationController.getUserInfo)
 
 export default usersRouter
