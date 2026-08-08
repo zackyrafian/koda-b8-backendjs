@@ -1,7 +1,6 @@
 import jwt from "jsonwebtoken"
 
-const JWT_SECRET = "ALEX" 
-
+const JWT_SECRET = process.env.JWT_SECRET
 
 function sign(payload) { 
   return jwt.sign(payload, JWT_SECRET)
