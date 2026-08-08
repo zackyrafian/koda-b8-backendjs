@@ -30,7 +30,13 @@ export async function create(user_id, address_id, cart_items) {
   }
 }
 
-export async function findAll(user_id) { 
+export async function findAll(user_id) {
+  const values = []; 
+  let whereClause = ''; 
+  if (user_id !== undefined && user_id !== null) { 
+    values.push(user_id)
+    whereClause = 'WHERE o.user.id =  $1'
+  }
   const { rows } = await pool.query(
     `SELECT 
       o.id,
@@ -62,10 +68,10 @@ export async function findAll(user_id) {
     LEFT JOIN user_address a ON o.address_id = a.id
     LEFT JOIN user_order_items oi ON o.id = oi.order_id
     LEFT JOIN products p ON oi.product_id = p.id
-    WHERE o.user_id = $1
+    ${whereClause}
     GROUP BY o.id, a.id
     ORDER BY o.created_at DESC`,
-    [user_id]
+    values
   )
   return rows
 }

@@ -81,20 +81,16 @@ export async function create(req, res) {
   }
 }
 
+
 export async function getAll(req, res) { 
-  const user_id = parseInt(req.user.userId)
+  const { userId, role } = req.user
+  const user_id = parseInt(userId)
   try { 
-    const orders = await ordersModel.findAll(user_id)
-    const results = orders.map((order) => ({ 
-      ...order,
-      payment_method: "BCA Virtual Account",
-      // payment: generateVA(order.id),
-      delivery_method: "JNE Express"
-    }))
+    const orders = role === 'ADMIN' ? await ordersModel.findAll() : await ordersModel.findAll(user_id)
+
     res.status(200).json({ 
-      "success": true, 
-      "message": "Success get all orders",
-      "results": results
+      "success": true,
+      "results": orders
     })
   } catch (error) { 
     res.status(500).json({ 
