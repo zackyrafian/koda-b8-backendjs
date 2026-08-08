@@ -40,3 +40,22 @@ export async function getById(req, res) {
     })
   }
 }
+
+export async function create(req, res) { 
+  const user_id = req.user.userId; 
+  const request = req.body; 
+  console.log(request);
+  try { 
+    const product = await productsModels.create(user_id, request)
+    res.status(200).json({ 
+      "success": true, 
+      "message": "Success created product.", 
+      "result": product
+    })
+  } catch (erorr) { 
+    res.status(500).json({ 
+      "success": false, 
+      "message": erorr.message
+    })
+  } 
+}
