@@ -35,7 +35,7 @@ export async function findAll(user_id) {
   let whereClause = ''; 
   if (user_id !== undefined && user_id !== null) { 
     values.push(user_id)
-    whereClause = 'WHERE o.user.id =  $1'
+    whereClause = 'WHERE o.user_id =  $1'
   }
   const { rows } = await pool.query(
     `SELECT 
