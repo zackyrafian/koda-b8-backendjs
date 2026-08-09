@@ -64,6 +64,7 @@ export async function remove(req, res) {
 }
 
 export async function create(req, res) { 
+  console.log(req.user)
   try { 
     const product = await productsModels.create(req.body)
     res.status(201).json({ 
