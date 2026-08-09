@@ -1,4 +1,4 @@
-import * as userWistListsModel from "../../models/users/cart.model.js"
+import * as userWistListsModel from "../../models/users/wishlists.model.js"
 
 export async function getAll(req, res) { 
   const user_id = parseInt(req.user.userId)
@@ -25,20 +25,22 @@ export async function getAll(req, res) {
 
 export async function create(req, res) { 
   const user_id = parseInt(req.user.userId)
-  const { product_id, quantity } = req.body;
+  console.log(user_id)
+  const { product_id } = req.body;
+  console.log(req.body)
   try { 
     if (!user_id) { 
       return res.status(400).json({ 
         "success": false, 
       })
     } 
-    if (!product_id && !quantity || quantity < 1) { 
+    if (!product_id) { 
       return res.status(400).json({ 
         "success": false, 
         "message": "Format Failed"
      }) 
     }
-    await userWistListsModel.create(user_id, product_id, quantity)
+    await userWistListsModel.create(user_id, product_id)
     res.status(201).json({ 
       "success": true, 
       "message": "Product successfully added to cart."
