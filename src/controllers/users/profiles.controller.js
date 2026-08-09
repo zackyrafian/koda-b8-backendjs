@@ -31,7 +31,6 @@ export async function profileImage(req, res) {
   // console.log(req.file)
   // console.log(req.body)
   console.log(body)
-  console.log(body.fullname)
   try { 
     await userModel.updateProfile(user_id, {
       fullname: body.full_name,
