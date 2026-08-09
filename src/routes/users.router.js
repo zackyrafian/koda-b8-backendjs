@@ -3,6 +3,7 @@ import * as userCartController from "../controllers/users/cart.controller.js"
 import * as userOrdersController from "../controllers/users/orders.controller.js"
 import * as userAddressController from "../controllers/users/address.controller.js"
 import * as userInformationController from "../controllers/users/users.controller.js"
+import * as userWishListsController from "../controllers/users/wishlists.controller.js"
 import { Router } from "express";
 import authMiddleware from "../middleware/auth.middleware.js";
 import uploadMiddleware from "../middleware/upload.middleware.js";
@@ -337,5 +338,8 @@ usersRouter.get("/address/:id", authMiddleware, userAddressController.getById)
  *         description: Unauthorized
  */
 usersRouter.get("/info", authMiddleware, userInformationController.getUserInfo)
+
+usersRouter.get("/wishlist", authMiddleware, userWishListsController.getAll)
+usersRouter.post("/wishlist", authMiddleware, userWishListsController.create)
 
 export default usersRouter
