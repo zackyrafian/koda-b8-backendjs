@@ -40,6 +40,11 @@ export async function findAll(user_id) {
   const { rows } = await pool.query(
     `SELECT 
       o.id,
+      json_build_object(
+        'id', o.user_id,
+        'email', u.email,
+        'fullname', up.fullname
+      ) as user,
       o.user_id,
       o.total_price,
       o.status,
@@ -65,21 +70,32 @@ export async function findAll(user_id) {
         )
       ) as items
     FROM user_orders o
+    LEFT JOIN users u ON o.user_id = u.id
+    LEFT JOIN user_profiles up ON o.user_id = up.user_id
     LEFT JOIN user_address a ON o.address_id = a.id
     LEFT JOIN user_order_items oi ON o.id = oi.order_id
     LEFT JOIN products p ON oi.product_id = p.id
     ${whereClause}
-    GROUP BY o.id, a.id
+    GROUP BY o.id, a.id, u.email, up.fullname
     ORDER BY o.created_at DESC`,
     values
   )
   return rows
 }
 
-export async function findOne(order_id, user_id) { 
+export async function findOne(order_id, user_id = null) { 
+  const values = [order_id]
+  const userFilter = user_id !== null ? `AND o.user_id = $2` : ''
+  if (user_id !== null) values.push(user_id)
+
   const { rows } = await pool.query(
     `SELECT 
       o.id,
+      json_build_object(
+        'id', o.user_id,
+        'email', u.email,
+        'fullname', up.fullname
+      ) as user,
       o.user_id,
       o.total_price,
       o.status,
@@ -119,11 +135,13 @@ export async function findOne(order_id, user_id) {
     LEFT JOIN user_address a ON o.address_id = a.id
     LEFT JOIN user_order_items oi ON o.id = oi.order_id
     LEFT JOIN products p ON oi.product_id = p.id
+    LEFT JOIN users u ON o.user_id = u.id
+    LEFT JOIN user_profiles up ON o.user_id = up.user_id
     LEFT JOIN payments pay ON pay.order_id = o.id
     LEFT JOIN payment_methods pm ON pay.payment_method_id = pm.id
-    WHERE o.id = $1 AND o.user_id = $2
-    GROUP BY o.id, a.id, pay.id, pm.name`,
-    [order_id, user_id]
+    WHERE o.id = $1 ${userFilter}
+    GROUP BY o.id, a.id, u.email, up.fullname, pay.id, pm.name`,
+    values
   )
   return rows[0]
 }
