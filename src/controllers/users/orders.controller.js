@@ -102,9 +102,12 @@ export async function getAll(req, res) {
 
 export async function getOne(req, res) { 
   const { id } = req.params
-  const user_id = parseInt(req.user.userId)
+  const { userId, role } = req.user
+  const user_id = parseInt(userId)
   try { 
-    const order = await ordersModel.findOne(id, user_id)
+    const order = role === 'ADMIN'
+      ? await ordersModel.findOne(id)
+      : await ordersModel.findOne(id, user_id)
     if (!order) { 
       return res.status(404).json({ 
         "success": false, 
