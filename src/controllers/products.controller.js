@@ -41,6 +41,28 @@ export async function getById(req, res) {
   }
 }
 
+export async function remove(req, res) {
+  const { id } = req.params
+  try {
+    const product = await productsModels.remove(id)
+    if (!product) {
+      return res.status(404).json({
+        "success": false,
+        "message": `Product ${id} not found.`
+      })
+    }
+    res.status(200).json({
+      "success": true,
+      "message": `Product ${product.name} deleted.`
+    })
+  } catch (error) {
+    res.status(500).json({
+      "success": false,
+      "message": error.message
+    })
+  }
+}
+
 export async function create(req, res) { 
   try { 
     const product = await productsModels.create(req.body)

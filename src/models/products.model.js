@@ -1,5 +1,13 @@
 import { pool } from "../config/postgres.js"
 
+export async function remove(id) {
+  const { rows } = await pool.query(
+    `DELETE FROM products WHERE id = $1 RETURNING id, name`,
+    [id]
+  )
+  return rows[0]
+}
+
 export async function create(body) {
   const { name, price, discount, stock, description, brand_id, category_id } = body
   const { rows } = await pool.query(

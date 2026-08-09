@@ -7,5 +7,6 @@ const productsRouter = Router()
 productsRouter.get('/', productsController.getAll)
 productsRouter.get('/:id', productsController.getById)
 productsRouter.post('/', authMiddleware, isAdmin, productsController.create)
+productsRouter.delete('/:id', authMiddleware, isAdmin, productsController.remove)
 
 export default productsRouter;
