@@ -1,5 +1,16 @@
 import { pool } from "../config/postgres.js"
 
+export async function create(body) {
+  const { name, price, discount, stock, description, brand_id, category_id } = body
+  const { rows } = await pool.query(
+    `INSERT INTO products (name, price, discount, stock, description, brand_id, category_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING id, name, price, discount, stock, description, brand_id, category_id, created_at`,
+    [name, price, discount ?? 0, stock, description, brand_id, category_id]
+  )
+  return rows[0]
+}
+
 export async function findAll(search) {
   const conditions = []
   const values = []
