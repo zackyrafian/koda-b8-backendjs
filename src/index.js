@@ -4,6 +4,10 @@ import router from "./routes/index.js";
 import { pool } from "./config/postgres.js";
 import 'dotenv/config'
 import corsMiddleware from "./middleware/cors.middleware.js";
+import { createRequire } from "module";
+import swaggerSpec from "./config/swagger.js";
+const require = createRequire(import.meta.url);
+const swaggerUi = require("swagger-ui-express");
 const app = express(); 
 
 app.get("/ping", (req, res) => { 
@@ -32,6 +36,7 @@ app.use('/images', express.static('images'))
 app.use(express.json()) 
 app.use(express.urlencoded({ extended: true }))
 app.use(corsMiddleware)
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 app.use(router)
 
 
