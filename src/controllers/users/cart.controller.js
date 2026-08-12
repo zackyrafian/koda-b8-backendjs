@@ -18,7 +18,7 @@ export async function getAll(req, res) {
 
 export async function create(req, res) { 
   const user_id = parseInt(req.user.userId)
-  const { product_id, quantity } = req.body;
+  const { product_id, quantity, variant } = req.body;
   try { 
     if (!product_id || !quantity || quantity < 1) { 
       return res.status(400).json({ 
@@ -26,7 +26,7 @@ export async function create(req, res) {
         "message": "product_id and quantity are required and quantity must be >= 1"
       }) 
     }
-    await userCartModel.create(user_id, product_id, quantity)
+    await userCartModel.create(user_id, product_id, quantity, variant)
     res.status(201).json({ 
       "success": true, 
       "message": "Product successfully added to cart."
