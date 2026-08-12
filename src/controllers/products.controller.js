@@ -2,13 +2,26 @@ import * as productsModels from "../models/products.model.js"
 import qs from "qs"
 
 export async function getAll(req, res) { 
-  const { search } = qs.parse(req.query)
+  const { search, page, limit } = qs.parse(req.query)
+  const pageNum = page !== undefined ? (parseInt(page) || 1) : null
+  const limitNum = limit !== undefined ? (parseInt(limit) || 10) : null
+  const paginate = pageNum !== null || limitNum !== null
   try { 
-    const products = await productsModels.findAll(search)
+    const { rows, total, totalPages, nextPage, prevPage } = await productsModels.findAll(search, pageNum, limitNum)
     res.status(200).json({ 
       "success": true, 
       "message": "Success get all products",
-      "results": products
+      ...(paginate && {
+        "data": {
+          "total": total,
+          "page": pageNum,
+          "limit": limitNum,
+          "totalPages": totalPages,
+          "nextPage": nextPage,
+          "prevPage": prevPage
+        }
+      }),
+      "results": rows
     })
   } catch (error) { 
     res.status(500).json({ 
@@ -64,7 +77,6 @@ export async function remove(req, res) {
 }
 
 export async function create(req, res) { 
-  console.log(req.user)
   try { 
     const product = await productsModels.create(req.body)
     res.status(201).json({ 
@@ -78,4 +90,41 @@ export async function create(req, res) {
       "message": error.message
     })
   } 
+}
+
+export async function uploadImages(req, res) {
+  const { id } = req.params
+
+  console.log(id);
+  console.log(req.file)
+  try {
+    const product = await productsModels.findOne("id", id)
+    if (!product) {
+      return res.status(404).json({
+        "success": false,
+        "message": `Product ${id} not found.`
+      })
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        "success": false,
+        "message": "No images uploaded."
+      })
+    }
+
+    const urls = req.files.map(file => `/images/${file.filename}`)
+    const images = await productsModels.createImages(id, urls)
+
+    res.status(201).json({
+      "success": true,
+      "message": `${images.length} image(s) uploaded for product ${id}.`,
+      "result": images
+    })
+  } catch (error) {
+    res.status(500).json({
+      "success": false,
+      "message": error.message
+    })
+  }
 }
