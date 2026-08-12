@@ -85,12 +85,29 @@ export async function create(req, res) {
 export async function getAll(req, res) { 
   const { userId, role } = req.user
   const user_id = parseInt(userId)
+  const { page, limit } = req.query
+  const pageNum = page !== undefined ? (parseInt(page) || 1) : null
+  const limitNum = limit !== undefined ? (parseInt(limit) || 10) : null
+  const paginate = pageNum !== null || limitNum !== null
   try { 
-    const orders = role === 'ADMIN' ? await ordersModel.findAll() : await ordersModel.findAll(user_id)
+    const result = role === 'ADMIN'
+      ? await ordersModel.findAll(undefined, pageNum, limitNum)
+      : await ordersModel.findAll(user_id, pageNum, limitNum)
+    const { rows, total, totalPages, nextPage, prevPage } = result
 
     res.status(200).json({ 
       "success": true,
-      "results": orders
+      ...(paginate && {
+        "data": {
+          "total": total,
+          "page": pageNum,
+          "limit": limitNum,
+          "totalPages": totalPages,
+          "nextPage": nextPage,
+          "prevPage": prevPage
+        }
+      }),
+      "results": rows
     })
   } catch (error) { 
     res.status(500).json({ 
