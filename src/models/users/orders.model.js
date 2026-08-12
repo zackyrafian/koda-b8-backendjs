@@ -12,11 +12,11 @@ export async function create(user_id, address_id, cart_items) {
       [user_id, address_id, total_price]
     )
     const order = orderResult.rows[0]
-    
+    console.log(order)
     for (const item of cart_items) { 
       await client.query(
-        `INSERT INTO user_order_items (order_id, product_id, quantity, price) VALUES ($1, $2, $3, $4)`,
-        [order.id, item.product_id, item.quantity, item.price]
+        `INSERT INTO user_order_items (order_id, product_id, variant, quantity, price) VALUES ($1, $2, $3, $4, $5)`,
+        [order.id, item.product_id, item.variant, item.quantity, item.price]
       )
     }
     
@@ -30,13 +30,29 @@ export async function create(user_id, address_id, cart_items) {
   }
 }
 
-export async function findAll(user_id) {
+export async function findAll(user_id, page = null, limit = null) {
+  if (page !== null || limit !== null) {
+    page = page ?? 1
+    limit = limit ?? 10
+  }
   const values = []; 
   let whereClause = ''; 
   if (user_id !== undefined && user_id !== null) { 
     values.push(user_id)
-    whereClause = 'WHERE o.user_id =  $1'
+    whereClause = 'WHERE o.user_id = $1'
   }
+
+  const paginate = page !== null && limit !== null
+  let paginationClause = ''
+  if (paginate) {
+    const offset = (page - 1) * limit
+    values.push(limit)
+    const limitParam = `$${values.length}`
+    values.push(offset)
+    const offsetParam = `$${values.length}`
+    paginationClause = `LIMIT ${limitParam} OFFSET ${offsetParam}`
+  }
+
   const { rows } = await pool.query(
     `SELECT 
       o.id,
@@ -66,7 +82,8 @@ export async function findAll(user_id) {
           'product_id', oi.product_id,
           'product_name', p.name,
           'quantity', oi.quantity,
-          'price', oi.price
+          'price', oi.price,
+          'variant', oi.variant
         )
       ) as items
     FROM user_orders o
@@ -77,10 +94,30 @@ export async function findAll(user_id) {
     LEFT JOIN products p ON oi.product_id = p.id
     ${whereClause}
     GROUP BY o.id, a.id, u.email, up.fullname
-    ORDER BY o.created_at DESC`,
+    ORDER BY o.created_at DESC
+    ${paginationClause}`,
     values
   )
-  return rows
+
+  const countValues = user_id !== undefined && user_id !== null ? [user_id] : []
+  const countWhere = countValues.length > 0 ? 'WHERE user_id = $1' : ''
+  const { rows: countRows } = await pool.query(
+    `SELECT COUNT(*) FROM user_orders ${countWhere}`,
+    countValues
+  )
+  const total = parseInt(countRows[0].count)
+
+  if (!paginate) return { rows, total }
+  const totalPages = Math.ceil(total / limit)
+  return {
+    rows,
+    total,
+    page,
+    limit,
+    totalPages,
+    nextPage: page < totalPages ? page + 1 : null,
+    prevPage: page > 1 ? page - 1 : null
+  }
 }
 
 export async function findOne(order_id, user_id = null) { 
@@ -117,7 +154,8 @@ export async function findOne(order_id, user_id = null) {
           'product_id', oi.product_id,
           'product_name', p.name,
           'quantity', oi.quantity,
-          'price', oi.price
+          'price', oi.price,
+          'variant', oi.variant
         )
       ) as items,
       json_build_object(
