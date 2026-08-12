@@ -6,7 +6,7 @@ import * as userInformationController from "../controllers/users/users.controlle
 import * as userWishListsController from "../controllers/users/wishlists.controller.js"
 import { Router } from "express";
 import authMiddleware from "../middleware/auth.middleware.js";
-import uploadMiddleware from "../middleware/upload.middleware.js";
+import { uploadMiddleware } from "../middleware/upload.middleware.js";
 
 const usersRouter = Router()
 
