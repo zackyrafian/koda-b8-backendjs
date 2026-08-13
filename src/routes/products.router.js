@@ -3,6 +3,7 @@ import * as productsController from "../controllers/products.controller.js"
 import authMiddleware from "../middleware/auth.middleware.js"
 import isAdmin from "../middleware/isAdmin.middleware.js"
 import { uploadMultipleMiddleware } from "../middleware/upload.middleware.js"
+import * as reviewsController from "../controllers/products/reviews.controller.js"
 
 const productsRouter = Router()
 
@@ -24,6 +25,9 @@ const productsRouter = Router()
  *         description: List of all products
  */
 productsRouter.get('/', productsController.getAll)
+
+productsRouter.get('/:id/reviews', reviewsController.getAll)
+productsRouter.post('/:id/reviews', authMiddleware, reviewsController.create)
 
 /**
  * @swagger
