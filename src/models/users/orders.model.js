@@ -183,3 +183,18 @@ export async function findOne(order_id, user_id = null) {
   )
   return rows[0]
 }
+
+export async function updateStatus(id, status) {
+  const { rows } = await pool.query(
+    `
+      UPDATE user_orders
+      SET status = $1,
+          updated_at = NOW()
+      WHERE id = $2
+      RETURNING *
+    `,
+    [status, id]
+  );
+
+  return rows[0] || null;
+}
