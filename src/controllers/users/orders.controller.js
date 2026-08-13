@@ -3,11 +3,22 @@ import * as cartModel from "../../models/users/cart.model.js"
 import * as addressModel from "../../models/users/address.model.js"
 import * as paymentModel from "../../models/payment.model.js"
 import generateVA  from "../../utils/va.js"
+import * as usersModel from "../../models/user.model.js"
+
 
 export async function create(req, res) { 
+  const io = req.app.get("io")
   const user_id = parseInt(req.user.userId)
   const { cart_id, address_id, payment_method_id } = req.body
   try { 
+    const user = await usersModel.findOne("id", user_id)
+    if (!user) { 
+      return res.status(404).json({ 
+        success: false, 
+        message: "user not found."
+      })
+    }
+    
     if (!cart_id || cart_id.length === 0) { 
       return res.status(400).json({ 
         "success": false, 
@@ -57,21 +68,30 @@ export async function create(req, res) {
     })
 
     console.log(payment)
+
+    const orderData = {
+      ...order, 
+      user: {
+        email: user.email, 
+        fullname: user.fullname, 
+      },
+      payment: {
+        method: paymentMethod.name,
+        va_number: payment.va_number,
+        total_amount: payment.total_amount,
+        expired_at: payment.expired_at
+      }
+    }
     
     await cartModel.deleteById(cart_id, user_id)
-    
+    io.emit("new_orders", { 
+      success: true, 
+      results: orderData
+    })
     res.status(201).json({ 
       "success": true, 
       "message": "Order created successfully",
-      "results": {
-        ...order, 
-        payment: {
-          method: paymentMethod.name, 
-          va_number: payment.va_number,
-          total_amount: payment.total_amount, 
-          expired_at: payment.expired_at
-        }
-      }
+      "results": orderData,
     })
   } catch (error) { 
     res.status(500).json({ 
@@ -95,6 +115,7 @@ export async function getAll(req, res) {
       : await ordersModel.findAll(user_id, pageNum, limitNum)
     const { rows, total, totalPages, nextPage, prevPage } = result
 
+
     res.status(200).json({ 
       "success": true,
       ...(paginate && {
@@ -109,6 +130,7 @@ export async function getAll(req, res) {
       }),
       "results": rows
     })
+    console.log(rows)
   } catch (error) { 
     res.status(500).json({ 
       "success": false, 
