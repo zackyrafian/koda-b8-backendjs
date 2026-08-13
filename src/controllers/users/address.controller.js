@@ -110,3 +110,59 @@ export async function remove (req, res) {
     })
   }
 }
+
+export async function update(req, res) {
+  const id = Number(req.params.id)
+  const userId = Number(req.user.userId)
+
+  if (!Number.isInteger(id) || id < 1) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid id"
+    })
+  }
+
+  const fields = [
+    "recipient_name",
+    "phone_number",
+    "recipient_email",
+    "recipient_address_full",
+    "recipient_city",
+    "recipient_province",
+    "zip_code"
+  ]
+  const data = Object.fromEntries(
+    fields
+      .filter((field) => Object.prototype.hasOwnProperty.call(req.body, field))
+      .map((field) => [field, req.body[field]])
+  )
+
+  if (!Object.keys(data).length) {
+    return res.status(400).json({
+      success: false,
+      message: "At least one field is required"
+    })
+  }
+
+  try {
+    const address = await userAddressModel.update(userId, id, data)
+
+    if (!address) {
+      return res.status(404).json({
+        success: false,
+        message: "Address not found."
+      })
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Successfully updated address.",
+      result: address
+    })
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    })
+  }
+}

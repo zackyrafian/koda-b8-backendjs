@@ -41,10 +41,48 @@ export async function findOne(user_id, args, value) {
   return rows[0];
 }
 
-export async function deleteById(userId, id) { 
+export async function deleteById(userId, id) {
   const { rows } = await pool.query(
-    `DELETE FROM user_address WHERE id = $2 AND user_id = $1 RETURNING * `, 
+    `
+    DELETE FROM user_address WHERE id = $1 AND user_id = $2
+    RETURNING *
+    `,
     [id, userId]
-  )
+  );
+
   return rows;
+}
+export async function update(userId, id, data) {
+  const fields = [
+    "recipient_name",
+    "phone_number",
+    "recipient_email",
+    "recipient_address_full",
+    "recipient_city",
+    "recipient_province",
+    "zip_code"
+  ]
+  const updates = []
+  const values = [id, userId]
+
+  for (const field of fields) {
+    if (Object.prototype.hasOwnProperty.call(data, field)) {
+      values.push(data[field])
+      updates.push(`${field} = $${values.length}`)
+    }
+  }
+
+  if (!updates.length) {
+    return null
+  }
+
+  const { rows } = await pool.query(
+    `UPDATE user_address
+     SET ${updates.join(", ")}, updated_at = NOW()
+     WHERE id = $1 AND user_id = $2
+     RETURNING *`,
+    values
+  )
+
+  return rows[0] || null
 }
