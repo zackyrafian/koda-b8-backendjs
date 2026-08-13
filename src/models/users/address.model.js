@@ -40,3 +40,11 @@ export async function findOne(user_id, args, value) {
   )
   return rows[0];
 }
+
+export async function deleteById(userId, id) { 
+  const { rows } = await pool.query(
+    `DELETE FROM user_address WHERE id = $2 AND user_id = $1 RETURNING * `, 
+    [id, userId]
+  )
+  return rows;
+}

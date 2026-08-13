@@ -325,6 +325,31 @@ usersRouter.get("/address/:id", authMiddleware, userAddressController.getById)
 
 /**
  * @swagger
+ * /users/address/{id}:
+ *   get:
+ *     summary: Get address by ID
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Address ID
+ *     responses:
+ *       200:
+ *         description: Address data
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Address not found
+ */
+usersRouter.delete("/address/:id", authMiddleware, userAddressController.remove)
+
+/**
+ * @swagger
  * /users/info:
  *   get:
  *     summary: Get user account information

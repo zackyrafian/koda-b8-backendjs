@@ -91,3 +91,22 @@ export async function getById(req, res) {
     })
   }
 }
+
+export async function remove (req, res) { 
+  const { id } = req.params; 
+  const { userId } = req.user;
+
+  console.log(id, userId)
+  try {
+    await userAddressModel.deleteById(userId, id)
+    res.json({
+      success: true,
+      message: "Success deleted address",
+    })
+  } catch (error) { 
+    res.status(500).json({ 
+      success: false, 
+      message: error.message
+    })
+  }
+}
