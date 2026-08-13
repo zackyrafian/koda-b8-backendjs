@@ -17,7 +17,7 @@
     "username": "postgres",
     "password": "admin",
     "database": "belimudah",
-    "host": "127.0.0.1",
+    "host": "postgres",
     "dialect": "postgres"
   }
 }
