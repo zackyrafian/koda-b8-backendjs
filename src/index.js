@@ -21,7 +21,7 @@ const app = express();
 const socket = createServer(app); 
 const io = new Server(socket, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: process.env.CLIENT_URL,
     methods: ["GET", "POST"],
   },
 });
