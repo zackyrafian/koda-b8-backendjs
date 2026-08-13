@@ -1,6 +1,9 @@
 import argon2, { hash } from "argon2"
 import libJWT from "../libs/jwt.js";
 import * as userModel from "../models/user.model.js"
+import db from "../models/index.js"
+
+const { User } = db;
 
 export async function register(req, res) { 
   try { 
@@ -46,8 +49,12 @@ export async function loign(req, res) {
         "message": "Required email & password"
       })
     }
-    
-    const user = await userModel.findOne("email", email)
+
+    const user = await User.findOne({
+      where: { email }
+    })
+
+    // const user = await userModel.findOne("email", email)
     if (!user) { 
       res.status(400).json({ 
         "success": false, 
@@ -55,6 +62,7 @@ export async function loign(req, res) {
       })
       return
     }
+    
 
     const valid = await argon2.verify(user.password, password)
     if (!valid) { 
