@@ -85,15 +85,28 @@ export async function findAll(user_id, page = null, limit = null) {
           'price', oi.price,
           'variant', oi.variant
         )
-      ) as items
+      ) as items,
+      json_build_object(
+        'id', pay.id,
+        'method', pm.name,
+        'va_number', pay.va_number,
+        'amount', pay.amount,
+        'admin_fee', pay.admin_fee,
+        'total_amount', pay.total_amount,
+        'status', pay.status,
+        'expired_at', pay.expired_at,
+        'paid_at', pay.paid_at
+      ) as payment
     FROM user_orders o
     LEFT JOIN users u ON o.user_id = u.id
     LEFT JOIN user_profiles up ON o.user_id = up.user_id
     LEFT JOIN user_address a ON o.address_id = a.id
     LEFT JOIN user_order_items oi ON o.id = oi.order_id
     LEFT JOIN products p ON oi.product_id = p.id
+    LEFT JOIN payments pay ON pay.order_id = o.id
+    LEFT JOIN payment_methods pm ON pay.payment_method_id = pm.id
     ${whereClause}
-    GROUP BY o.id, a.id, u.email, up.fullname
+    GROUP BY o.id, a.id, u.email, up.fullname, pay.id, pm.name
     ORDER BY o.created_at DESC
     ${paginationClause}`,
     values
