@@ -5,9 +5,11 @@ import categoriesRouter from "./categories.router.js"
 import usersRouter from "./users.router.js"
 import productsRouter from "./products.router.js"
 import paymentRouter from "./payment.router.js"
+import adminRouter from "./admin.router.js"
 
 
 const router = Router() 
+router.use("/admin", adminRouter)
 router.use("/auth", authRouter)
 router.use("/brands", brandRouter)
 router.use("/categories", categoriesRouter)
