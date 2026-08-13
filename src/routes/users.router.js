@@ -347,6 +347,7 @@ usersRouter.get("/address/:id", authMiddleware, userAddressController.getById)
  *         description: Address not found
  */
 usersRouter.delete("/address/:id", authMiddleware, userAddressController.remove)
+usersRouter.patch("/address/:id", authMiddleware, userAddressController.update)
 
 /**
  * @swagger
