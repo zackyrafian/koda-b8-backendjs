@@ -4,5 +4,4 @@ COPY ./package*.json .
 RUN npm i
 COPY . .
 EXPOSE 8080
-# CMD [ "node", "./src/index.js" ]
-ENTRYPOINT ["sh", "-c", "npx sequelize-cli db:migrate && node ./src/index.js"]
+ENTRYPOINT ["sh", "-c", "npx sequelize-cli db:migrate --config src/config/config.json --migrations-path src/migrations --models-path src/models && node ./src/index.js"]
