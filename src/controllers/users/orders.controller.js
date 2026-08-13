@@ -80,7 +80,8 @@ export async function create(req, res) {
         va_number: payment.va_number,
         total_amount: payment.total_amount,
         expired_at: payment.expired_at
-      }
+      }, 
+      items: cart_items,
     }
     
     await cartModel.deleteById(cart_id, user_id)
