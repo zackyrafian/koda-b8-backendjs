@@ -192,14 +192,26 @@ export async function update(req, res) {
   }
 
   try {
-    const address = await userAddressModel.update(userId, id, data)
+    // const address = await userAddressModel.update(userId, id, data)
+    // 
+    // 
+    const [updated] = await sq.UserAddress.update(data, { 
+      where: { 
+        id: id, 
+        user_id: userId,
+      }
+    })
 
-    if (!address) {
+    if (!updated) {
       return res.status(404).json({
         success: false,
         message: "Address not found."
       })
     }
+
+    const address = await sq.UserAddress.findOne({
+      where: { id, user_id: userId }
+    })
 
     return res.status(200).json({
       success: true,
