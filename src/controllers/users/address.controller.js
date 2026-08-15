@@ -95,7 +95,7 @@ export async function getAll(req, res) {
 
 export async function getById(req, res) { 
   const { id } = req.params
-  const user_id = req.user.userId 
+  const user_id = parseInt(req.user.userId)
   if (!id || isNaN(id)) { 
     res.status(400).json({ 
       "success": false, 
@@ -104,7 +104,12 @@ export async function getById(req, res) {
     return
   }
   try { 
-    const address = await userAddressModel.findOne(user_id, "id", id)
+    // const address = await userAddressModel.findOne(user_id, "id", id)
+   
+    const address = await sq.UserProfile.findOne({
+      where: { id, user_id }, 
+    })
+
     if (!address) { 
       return res.status(404).json({ 
         "success": false,
@@ -125,11 +130,22 @@ export async function getById(req, res) {
 
 export async function remove (req, res) { 
   const { id } = req.params; 
-  const { userId } = req.user;
+  const user_id = parseInt(req.user.userId)
 
-  console.log(id, userId)
   try {
-    await userAddressModel.deleteById(userId, id)
+    // await userAddressModel.deleteById(userId, id)
+    // 
+    const address = await sq.UserAddress.destroy({ 
+      where: { id, user_id }
+    })
+
+    if (!address) { 
+      return res.status(404).json({
+        success: false, 
+        message: "-> 404"
+      }) 
+    }
+    
     res.json({
       success: true,
       message: "Success deleted address",
