@@ -3,14 +3,16 @@ import libJWT from "../libs/jwt.js";
 import * as userModel from "../models/user.model.js"
 import db from "../models/index.js"
 
-const { User } = db;
+const { User, UserProfile } = db;
 
 export async function register(req, res) { 
   try { 
     console.log(req.body)
     const { fullname, email, password } = req.body; 
-    const existing = await userModel.findOne("email", email)
-
+    // const existing = await userModel.findOne("email", email)
+    const existing = await User.findOne({ 
+      where: { email }
+    })
     if (email.indexOf('@') === -1) { 
       res.status(400).json({ 
         "success": false, 
@@ -26,7 +28,20 @@ export async function register(req, res) {
       return 
     }
     const hashPassword = await argon2.hash(password)
-    const data = await userModel.create({fullname, email, password: hashPassword})
+    // const data = await userModel.create({fullname, email, password: hashPassword})
+    // 
+    const data = await User.create({ 
+      email: email, 
+      password: hashPassword, 
+      profile: { 
+        fullname: fullname,
+      }
+    }, {
+      include: [{
+        model: db.UserProfile,
+        as: 'profile'
+      }]
+    })
     console.log(data);
     res.status(201).json({ 
       "success": true, 
