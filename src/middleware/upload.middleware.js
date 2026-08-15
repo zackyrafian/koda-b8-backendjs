@@ -78,6 +78,10 @@ async function processImage(file) {
         return
       }
 
+      if (!req.file) {
+        return next();
+      }
+
       try { 
         const filename = await processImage(req.file)
         req.file.filename = filename
