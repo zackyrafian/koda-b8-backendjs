@@ -62,14 +62,18 @@ export async function create(req, res) {
 export async function getAll(req, res) { 
   const user_id = req.user.userId 
   try { 
-    const address = await userAddressModel.findAll(user_id)
-    if (!address) { 
-      res.status(404).json({ 
-        "success": false, 
-        "message": "-> 404"
-      })
-      return
-    } 
+    // const address = await userAddressModel.findAll(user_id)
+    // if (!address) { 
+    //   res.status(404).json({ 
+    //     "success": false, 
+    //     "message": "-> 404"
+    //   })
+    //   return
+    // } 
+    // 
+    const address = await sq.UserAddress.findAll({
+      where: { user_id }
+    })
     res.status(200).json({ 
       "success": true, 
       "results": address
