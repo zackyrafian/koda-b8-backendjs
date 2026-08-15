@@ -1,7 +1,8 @@
 import * as userAddressModel from "../../models/users/address.model.js"
+import sq from '../../models/index.js'
 
 export async function create(req, res) {
-  const user_id = req.user.userId 
+  const user_id = parseInt(req.user.userId) 
   const {
     recipient_name,
     phone_number,
@@ -13,6 +14,7 @@ export async function create(req, res) {
   } = req.body;
 
   const request = { 
+    user_id,
     recipient_name,
     phone_number,
     recipient_email,
@@ -22,12 +24,30 @@ export async function create(req, res) {
     zip_code
   }
   try { 
-    const address = await userAddressModel.create(user_id, request)
-    console.log(address)
-    res.status(200).json({ 
-      "success": true, 
-      "message": "Success added address.",
-      "result": { 
+    // const address = await userAddressModel.create(user_id, request)
+    // console.log(address)
+    // res.status(200).json({ 
+    //   "success": true, 
+    //   "message": "Success added address.",
+    //   "result": { 
+    //     id: address.id
+    //   }
+    // })
+    // 
+    // 
+    if (!sq.User.findByPk(user_id)) { 
+      return res.status(404).json({ 
+        success: false,
+        message: "User Not found"
+      })
+    }
+    
+    const address = await sq.UserAddress.create(request)
+
+    res.status(201).json({ 
+      success: false, 
+      message: "Success added address", 
+      result: { 
         id: address.id
       }
     })
