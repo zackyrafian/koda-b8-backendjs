@@ -128,3 +128,66 @@ export async function uploadImages(req, res) {
     })
   }
 }
+
+export async function removeImages(req, res) {
+  const { id } = req.params; 
+  const { imagesIds } = req.body; 
+
+  try { 
+    const product = await productsModels.findOne("id", id)
+
+    if (!product) { 
+      return res.status(404).json({ 
+        success: false, 
+        message: `Product ${id} not found.`
+      })
+    }
+
+    if (!imagesIds || !Array.isArray(imagesIds) || imagesIds.length === 0) { 
+      return res.status(400).json({ 
+        success: false, 
+        message: "No image IDs provided."
+      })
+    }
+
+    const deleted = await productsModels.removeImages(id, imagesIds)
+
+    res.status(200).json({ 
+      success: false, 
+      message: `${deleted.length} image(s) deleted from product ${id}.`,
+      result: deleted
+    })
+  } catch (error) { 
+    res.status(500).json({ 
+      success: false, 
+      message: error.message
+    })
+  }
+}
+
+export async function update(req, res) { 
+  const { id } = req.params;
+  console.log(req.body)
+  try { 
+    const existing = productsModels.findOne("id", id);
+
+    if (!existing) { 
+      return res.status(404).json({
+        success: false, 
+        message: "Product Not found"
+      })
+    }
+
+    const product = await productsModels.update(id, req.body); 
+    res.status(200).json({
+      success: false, 
+      message: "success updated product.",
+      result: product
+    })
+  } catch (error) { 
+    res.status(500).json({
+      success: false, 
+      message: error.message
+    })
+  }
+}

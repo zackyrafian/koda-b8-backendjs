@@ -55,6 +55,79 @@ export async function createImages(productId, urls) {
   return rows
 }
 
+export async function removeImages(productId, imageId) { 
+  const { rows } = await pool.query(
+    `DELETE FROM product_images WHERE id = ANY($1) AND product_id = $2 RETURNING *`, 
+    [imageId, productId]
+  )
+  return rows; 
+}
+
+export async function update(productId, body) {
+  const { name, price, discount, stock, description, brand_id, category_id, variant } = body
+  const client = await pool.connect()
+
+  try {
+    await client.query("BEGIN")
+    const { rows } = await client.query(
+      `UPDATE products 
+       SET
+       name = COALESCE($1, name),
+       price = COALESCE($2, price),
+       discount = COALESCE($3, discount),
+       stock = COALESCE($4, stock),
+       description = COALESCE($5, description),
+       brand_id = COALESCE($6, brand_id),
+       category_id = COALESCE($7, category_id),
+       updated_at = NOW()
+       WHERE id = $8
+       RETURNING id, name, price, discount, stock, description, brand_id, category_id, created_at, updated_at`,
+      [name, price, discount ?? 0, stock, description, brand_id, category_id, productId]
+    )
+    
+    if (rows.length === 0) {
+      throw new Error('Product not found')
+    }
+    
+    const product = rows[0]
+    let variants = []
+    
+    if (variant !== undefined) {
+      variants = [...new Set(
+        (typeof variant === "string" ? variant.split(",") : [])
+          .map(value => value.trim())
+          .filter(Boolean)
+      )]
+      
+      await client.query(
+        "DELETE FROM product_variants WHERE product_id = $1",
+        [productId]
+      )
+      if (variants.length > 0) {
+        const values = variants.map((_, index) => `($1, $${index + 2})`).join(", ")
+        await client.query(
+          `INSERT INTO product_variants (product_id, name) VALUES ${values}`,
+          [productId, ...variants]
+        )
+      }
+    } else {
+      const variantRows = await client.query(
+        "SELECT name FROM product_variants WHERE product_id = $1",
+        [productId]
+      )
+      variants = variantRows.rows.map(row => row.name)
+    }
+
+    await client.query("COMMIT")
+    return { ...product, variant: variants }
+  } catch (error) {
+    await client.query("ROLLBACK")
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
 export async function findAll(search, page = null, limit = null) {
   if (page !== null || limit !== null) {
     page = page ?? 1
@@ -100,6 +173,8 @@ export async function findAll(search, page = null, limit = null) {
       p.description,
       p.created_at,
       p.updated_at,
+      p.brand_id,
+      p.category_id,
       b.name AS brand,
       c.name AS category,
       COALESCE(
@@ -158,6 +233,8 @@ export async function findOne(args, value) {
       p.description,
       p.created_at,
       p.updated_at,
+      p.brand_id,
+      p.category_id,
       b.name AS brand,
       c.name AS category,
       COALESCE(
@@ -180,3 +257,4 @@ export async function findOne(args, value) {
   )
   return rows[0];
 }
+

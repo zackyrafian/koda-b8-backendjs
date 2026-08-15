@@ -169,4 +169,8 @@ productsRouter.delete('/:id', authMiddleware, isAdmin, productsController.remove
  */
 productsRouter.post('/:id/images', authMiddleware, isAdmin, uploadMultipleMiddleware('images'), productsController.uploadImages)
 
+productsRouter.patch('/:id', authMiddleware, isAdmin, productsController.update)
+
+productsRouter.delete('/:id/images', authMiddleware, isAdmin, uploadMultipleMiddleware('images'), productsController.removeImages)
+
 export default productsRouter;
