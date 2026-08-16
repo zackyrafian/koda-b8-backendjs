@@ -1,5 +1,7 @@
 import * as productsModels from "../models/products.model.js"
 import qs from "qs"
+import sq from "../models/index.js"
+import categoriesRouter from "../routes/categories.router.js"
 
 export async function getAll(req, res) { 
   const { search, page, limit } = qs.parse(req.query)
@@ -34,7 +36,41 @@ export async function getAll(req, res) {
 export async function getById(req, res) { 
   const { id } = req.params;
   try { 
-    const product = await productsModels.findOne("id", id)
+
+    // DEFUALT RESPONSE 
+    // "success": true,
+    //   "result": {
+    //     "id": "1",
+    //     "name": "Alex",
+    //     "price": "100000",
+    //     "discount": 0,
+    //     "stock": 10,
+    //     "sold_out": "156",
+    //     "description": "test",
+    //     "created_at": "2026-08-12T05:46:37.899Z",
+    //     "updated_at": "2026-08-14T22:21:28.778Z",
+    //     "brand_id": "1",
+    //     "category_id": "1",
+    //     "brand": "SoundWare",
+    //     "category": "Audio",
+    //     "images": [
+    //       "/images/1786656823459-232293815.webp"
+    //     ],
+    //     "variant": [
+    //       "Blue",
+    //       "Red"
+    //     ]
+    // const product = await productsModels.findOne("id", id)
+    // 
+    console.log(Object.keys(sq))
+    const product = await sq.Products.findByPk(id, { 
+      include: [
+        { model: sq.ProductBrands, as: 'brand' },
+        { model: sq.ProductCategories, as: 'category' }, 
+        { model: sq.ProductImages, as: 'images' }, 
+        { model: sq.ProductVariants, as: 'variants' }
+      ]
+    })
     if (!product) { 
       res.status(404).json({
         "success": false, 
@@ -42,9 +78,27 @@ export async function getById(req, res) {
       })
       return
     }
+
+    const response = { 
+      id: product.id, 
+      name: product.name, 
+      price: product.price, 
+      discount: product.discount, 
+      stock: product.stock, 
+      sold_out: product.sold_out, 
+      description: product.description, 
+      create_at: product.createdAt, 
+      updated_at: product.updatedAt,
+      brand_id: product.brand_id, 
+      category_id: product.category_id,
+      brand: product.brand?.name || null, 
+      category: product.category?.name || null, 
+      images: product.images?.map(img => img.url) || [], 
+      variant: product.variants?.map(v => v.name) || [],
+    }
     res.status(200).json({ 
       "success": true, 
-      "result": product
+      "result": response
     })
   } catch (error) { 
     res.status(500).json({ 
