@@ -4,14 +4,18 @@ import * as addressModel from "../../models/users/address.model.js"
 import * as paymentModel from "../../models/payment.model.js"
 import generateVA  from "../../utils/va.js"
 import * as usersModel from "../../models/user.model.js"
-
+import sq from '../../models/index.js'
 
 export async function create(req, res) { 
   const io = req.app.get("io")
   const user_id = parseInt(req.user.userId)
   const { cart_id, address_id, payment_method_id } = req.body
   try { 
-    const user = await usersModel.findOne("id", user_id)
+    // const user = await usersModel.findOne("id", user_id)
+    // 
+    const user = await sq.User.findByPk(user_id, { 
+      include: [{ model: sq.UserProfile, as: 'profile' }]
+    })
     if (!user) { 
       return res.status(404).json({ 
         success: false, 
@@ -34,7 +38,10 @@ export async function create(req, res) {
     }
 
     const [address, paymentMethod] = await Promise.all([
-      addressModel.findOne(user_id, 'id', address_id),
+      // addressModel.findOne(user_id, 'id', address_id),
+      sq.UserAddress.findOne({ 
+        where: {id: address_id, user_id}
+      }),
       paymentModel.findMethodById(payment_method_id)
     ])
     if (!address) { 
@@ -43,8 +50,22 @@ export async function create(req, res) {
         "message": "Address not found"
       })
     }
+    // const cart_items = await cartModel.findById(cart_id, user_id)
+    const cart_items = await sq.UserCart.findAll({ 
+      where: { user_id, id: cart_id }, 
+      include: [{ model: sq.Products, as: 'products' }],
+    })
+
+    // console.log(JSON.stringify(cart_items, null, 2))
+    const items = cart_items.map(item => ({ 
+      id: item.id, 
+      user_id: item.user_id, 
+      product_id: item.product_id, 
+      variant: item.variant, 
+      quantity: item.quantity, 
+      price: item.products?.price
+    }))
     
-    const cart_items = await cartModel.findById(cart_id, user_id)
     
     if (cart_items.length === 0) { 
       return res.status(404).json({ 
@@ -52,12 +73,32 @@ export async function create(req, res) {
         "message": "No cart items found"
       })
     }
-    const order = await ordersModel.create(user_id, address_id, cart_items)
+
+    const total_price = cart_items.reduce((sum, item) => {
+     return sum + (Number(item.products.price) * item.quantity) 
+    }, 0)
+    // const order = await ordersModel.create(user_id, address_id, cart_items)
+    const order = await sq.UserOrders.create({ 
+      user_id, 
+      address_id, 
+      total_price,
+    })
+    await sq.UserOrderItems.bulkCreate( 
+      items.map(item => ({ 
+        order_id: order.id, 
+        product_id: item.product_id, 
+        variant: item.variant, 
+        quantity: item.quantity, 
+        price: item.price
+      }))
+    )
+    
+    console.log(JSON.stringify(order, null, 2))
 
     const vaNumber = paymentMethod.va_code ? generateVA(paymentMethod, order.id) : null;
     const totalAmount = Number(order.total_price) + Number(paymentMethod.admin_fee)
     
-    const payment = await paymentModel.create({
+    const payment = await sq.Payments.create({
       order_id: order.id,
       payment_method_id: paymentMethod.id,
       va_number: vaNumber,
@@ -67,13 +108,11 @@ export async function create(req, res) {
       expired_at: new Date(Date.now() + 24 * 3600 * 1000)
     })
 
-    console.log(payment)
-
     const orderData = {
-      ...order, 
+      ...order.toJSON(),
       user: {
         email: user.email, 
-        fullname: user.fullname, 
+        fullname: user.profile?.fullname,
       },
       payment: {
         method: paymentMethod.name,
@@ -81,10 +120,21 @@ export async function create(req, res) {
         total_amount: payment.total_amount,
         expired_at: payment.expired_at
       }, 
-      items: cart_items,
-    }
+      items: cart_items.map(item => ({
+        id: item.id,
+        product_id: item.product_id,
+        product_name: item.products?.name,
+        variant: item.variant,
+        quantity: item.quantity,
+        price: item.products?.price
+      }))
+    }      
     
-    await cartModel.deleteById(cart_id, user_id)
+    // await cartModel.deleteById(cart_id, user_id)
+    
+    await sq.UserCart.destroy({
+      where: { id: cart_id, user_id }
+    })
     io.emit("new_orders", { 
       success: true, 
       results: orderData
