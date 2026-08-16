@@ -354,23 +354,60 @@ export async function removeImages(req, res) {
 }
 
 export async function update(req, res) { 
-  const { id } = req.params;
-  console.log(req.body)
-  try { 
-    const existing = productsModels.findOne("id", id);
+  const { id } = req.params
+  const { name, price, discount, stock, description, brand_id, category_id, variant } = req.body
+  const { role } = req.user
 
-    if (!existing) { 
+  try { 
+
+    if (role !== "ADMIN") { 
+      return res.status(403).json({ 
+        success: false, 
+        message: "ADMIN Permission"
+      })
+    }
+    const product = await sq.Products.findByPk(id, {
+      include: [{ model: sq.ProductVariants, as: 'variants' }]
+    })
+
+    if (!product) { 
       return res.status(404).json({
         success: false, 
-        message: "Product Not found"
+        message: "Product not found"
       })
     }
 
-    const product = await productsModels.update(id, req.body); 
+    await product.update({
+      name, price, discount, stock, description, brand_id, category_id
+    })
+
+    if (variant !== undefined) {
+      const variants = [...new Set(
+        (typeof variant === "string" ? variant.split(",") : [])
+          .map(v => v.trim())
+          .filter(Boolean)
+      )]
+
+      await sq.ProductVariants.destroy({ where: { product_id: id } })
+
+      if (variants.length > 0) {
+        await sq.ProductVariants.bulkCreate(
+          variants.map(name => ({ product_id: id, name }))
+        )
+      }
+    }
+
+    const updated = await sq.Products.findByPk(id, {
+      include: [
+        { model: sq.ProductVariants, as: 'variants' },
+        { model: sq.ProductImages, as: 'images' }
+      ]
+    })
+
     res.status(200).json({
-      success: false, 
-      message: "success updated product.",
-      result: product
+      success: true, 
+      message: "Success updated product.",
+      result: updated
     })
   } catch (error) { 
     res.status(500).json({
