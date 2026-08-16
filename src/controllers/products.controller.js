@@ -193,8 +193,19 @@ export async function getById(req, res) {
 
 export async function remove(req, res) {
   const { id } = req.params
+  const { role } = req.user
   try {
-    const product = await productsModels.remove(id)
+    // const product = await productsModels.remove(id)
+    if (role !== 'ADMIN') { 
+      return res.status(403).json({
+        success: false, 
+        message: 'ADMIN Permission'
+      })
+    }
+    
+    const product = await sq.Products.destroy({ 
+      where: { id }
+    })
     if (!product) {
       return res.status(404).json({
         "success": false,
