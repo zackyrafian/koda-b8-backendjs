@@ -2,6 +2,7 @@ import { createRequire } from 'module';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import Sequelize from 'sequelize';
+import { readdirSync, statSync } from 'fs';
 
 const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
@@ -19,21 +20,26 @@ if (config.use_env_variable) {
   sequelize = new Sequelize(config.database, config.username, config.password, config);
 }
 
-import { readdirSync } from 'fs';
-
-readdirSync(__dirname)
-  .filter(file => {
-    return (
+function loadModels(dir) {
+  readdirSync(dir).forEach(file => {
+    const fullPath = path.join(dir, file);
+    if (statSync(fullPath).isDirectory()) {
+      loadModels(fullPath);
+      return;
+    }
+    if (
       file.indexOf('.') !== 0 &&
       file !== basename &&
-      file.endsWith('.cjs') &&
+      (file.endsWith('.model.cjs') || file.endsWith('.cjs')) &&
       file.indexOf('.test.cjs') === -1
-    );
-  })
-  .forEach(file => {
-    const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
-    db[model.name] = model;
+    ) {
+      const model = require(fullPath)(sequelize, Sequelize.DataTypes);
+      db[model.name] = model;
+    }
   });
+}
+
+loadModels(__dirname);
 
 Object.keys(db).forEach(modelName => {
   if (db[modelName].associate) {
