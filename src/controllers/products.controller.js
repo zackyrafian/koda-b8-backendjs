@@ -1,15 +1,98 @@
 import * as productsModels from "../models/products.model.js"
 import qs from "qs"
-import sq from "../models/index.js"
-import categoriesRouter from "../routes/categories.router.js"
+import sq, { Sequelize } from "../models/index.js"
 
 export async function getAll(req, res) { 
-  const { search, page, limit } = qs.parse(req.query)
+  const { search, page, limit, sort } = qs.parse(req.query)
   const pageNum = page !== undefined ? (parseInt(page) || 1) : null
   const limitNum = limit !== undefined ? (parseInt(limit) || 10) : null
   const paginate = pageNum !== null || limitNum !== null
   try { 
-    const { rows, total, totalPages, nextPage, prevPage } = await productsModels.findAll(search, pageNum, limitNum)
+    // const { rows, total, totalPages, nextPage, prevPage } = await productsModels.findAll(search, pageNum, limitNum)
+    // 
+    // 
+    const where = {} 
+    const brandWhere = {}
+    const categoryWhere = {} 
+
+    if (search?.name) { 
+      where.name = { [sq.Sequelize.Op.iLike]: `%${search.name}%`}
+    }
+
+    if (search?.brand) { 
+      brandWhere.name = { [sq.Sequelize.Op.iLike]: `%${search.brand}%`}
+    }
+
+    if (search?.category) {
+      categoryWhere.name = { [sq.Sequelize.Op.iLike]: `%${search.category}%`}
+    }
+
+    const allowedSortField = ['id', 'name', 'price', 'stock', 'sold_out', 'created_at']
+    const allowedSortDir = ['ASC', 'DESC']
+
+    const order = [] 
+    if (sort) { 
+      Object.entries(sort).forEach(([field, dir]) => {
+        const direction = dir?.toUpperCase() 
+        if (allowedSortField.includes(field) && allowedSortDir.includes(direction)) { 
+          order.push([field, direction])
+        }
+      })
+    }
+
+    if (order.length === 0) { 
+      order.push(['id', 'ASC'])
+    }
+    
+    const queryOptions = { 
+      where, 
+      include: [ 
+        { model: sq.ProductBrands, as: 'brand', where: brandWhere },
+        { model: sq.ProductCategories, as: 'category', where: categoryWhere },
+        { model: sq.ProductImages, as: 'images' },
+        { model: sq.ProductVariants, as: 'variants'},
+      ], 
+      order,
+      ...(paginate && { 
+        limit: limitNum, 
+        offset: (pageNum - 1) * limitNum 
+      })
+    }
+
+    const products = await sq.Products.findAll(queryOptions);
+
+    const total = await sq.Products.count({ 
+      where, 
+      include: [
+        { model: sq.ProductBrands, as: 'brand', where: brandWhere },
+        { model: sq.ProductCategories, as: 'category', where: categoryWhere},
+      ]
+    })
+
+    console.log(products)
+
+    const totalPages = limitNum ? Math.ceil(total / limitNum) : 1
+    const nextPage = pageNum && pageNum < totalPages ? pageNum + 1 : null
+    const prevPage = pageNum && pageNum > 1 ? pageNum - 1 : null
+    const response = products.map(product => ({ 
+      id: product.id, 
+      name: product.name, 
+      price: product.price, 
+      discount: product.discount, 
+      stock: product.stock, 
+      sold_out: product.sold_out, 
+      description: product.description, 
+      create_at: product.createdAt, 
+      updated_at: product.updatedAt,
+      brand_id: product.brand_id, 
+      category_id: product.category_id,
+      brand: product.brand?.name || null, 
+      category: product.category?.name || null, 
+      images: product.images?.map(img => img.url) || [], 
+      variant: product.variants?.map(v => v.name) || [],
+    }))
+
+    console.log(response)
     res.status(200).json({ 
       "success": true, 
       "message": "Success get all products",
@@ -23,7 +106,7 @@ export async function getAll(req, res) {
           "prevPage": prevPage
         }
       }),
-      "results": rows
+      "results": response
     })
   } catch (error) { 
     res.status(500).json({ 
