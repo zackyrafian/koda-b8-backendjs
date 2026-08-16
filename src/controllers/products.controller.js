@@ -311,10 +311,17 @@ export async function uploadImages(req, res) {
 export async function removeImages(req, res) {
   const { id } = req.params; 
   const { imagesIds } = req.body; 
-
+  const { role } = req.user; 
   try { 
-    const product = await productsModels.findOne("id", id)
 
+    if (!role !== 'ADMIN') { 
+      return res.status(403).json({ 
+        success: false,
+        message: "ADMIN Permission"
+      })
+    }
+    // const product = await productsModels.findOne("id", id)
+    const product = await sq.Products.findByPk(id)
     if (!product) { 
       return res.status(404).json({ 
         success: false, 
@@ -329,8 +336,10 @@ export async function removeImages(req, res) {
       })
     }
 
-    const deleted = await productsModels.removeImages(id, imagesIds)
-
+    // const deleted = await productsModels.removeImages(id, imagesIds)
+    const deleted = await sq.Products.destory({
+      where: { id: imagesIds, product_id: id }
+    })
     res.status(200).json({ 
       success: false, 
       message: `${deleted.length} image(s) deleted from product ${id}.`,
