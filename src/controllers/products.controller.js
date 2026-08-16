@@ -225,8 +225,34 @@ export async function remove(req, res) {
 }
 
 export async function create(req, res) { 
+  const { role } = req.user;
+  const { name, price, discount, stock, description, brand_id, category_id, variant } = req.body; 
+  const variants = [...new Set( 
+    (typeof variant === "string" ? variant.split(",") : []).map(v => v.trim()).filter(Boolean)
+  )]
   try { 
-    const product = await productsModels.create(req.body)
+    // const product = await productsModels.create(req.body)
+    // 
+    if (role !== 'ADMIN') { 
+      return res.status(403).json({
+        success: false, 
+        message: 'ADMIN Permission'
+      })
+    }
+    const product = await sq.Products.create({ 
+      name, 
+      price, 
+      discount, 
+      stock, 
+      description, 
+      brand_id, 
+      category_id, 
+      variants: variants.map(name => ({ name })),
+    }, { 
+      include: [
+        { model: sq.ProductVariants, as: 'variants' }, 
+      ]
+    })
     res.status(201).json({ 
       "success": true, 
       "message": "Success created product.", 
@@ -243,10 +269,9 @@ export async function create(req, res) {
 export async function uploadImages(req, res) {
   const { id } = req.params
 
-  console.log(id);
-  console.log(req.file)
   try {
-    const product = await productsModels.findOne("id", id)
+    // const product = await productsModels.findOne("id", id)
+    const product = await sq.Products.findByPk(id) 
     if (!product) {
       return res.status(404).json({
         "success": false,
@@ -261,8 +286,14 @@ export async function uploadImages(req, res) {
       })
     }
 
-    const urls = req.files.map(file => `/images/${file.filename}`)
-    const images = await productsModels.createImages(id, urls)
+    const images = await sq.ProductImages.bulkCreate(
+      req.files.map(file => ({ 
+        product_id: id, 
+        url: `/images/${file.filename}`
+      }))
+    )
+    // const urls = req.files.map(file => `/images/${file.filename}`)
+    // const images = await productsModels.createImages(id, urls)
 
     res.status(201).json({
       "success": true,
