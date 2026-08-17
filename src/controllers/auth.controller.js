@@ -1,6 +1,5 @@
 import argon2, { hash } from "argon2"
 import libJWT from "../libs/jwt.js";
-import * as userModel from "../models/user.model.js"
 import db from "../models/index.js"
 
 const { User, UserProfile } = db;
