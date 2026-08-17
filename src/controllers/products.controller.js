@@ -1,4 +1,3 @@
-import * as productsModels from "../models/products.model.js"
 import qs from "qs"
 import sq, { Sequelize } from "../models/index.js"
 
