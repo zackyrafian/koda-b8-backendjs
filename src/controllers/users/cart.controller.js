@@ -1,4 +1,3 @@
-import * as userCartModel from "../../models/users/cart.model.js"
 import sq from "../../models/index.js"
 
 export async function getAll(req, res) { 
@@ -53,6 +52,7 @@ export async function getAll(req, res) {
 
 export async function create(req, res) { 
   const user_id = parseInt(req.user.userId)
+  console.log(user_id)
   const { product_id, quantity, variant } = req.body;
   try { 
     if (!product_id || !quantity || quantity < 1) { 
@@ -90,7 +90,6 @@ export async function updateQuantity(req, res) {
   const cart_id = parseInt(req.params.id)
   const { quantity } = req.body;
 
-  console.log(user_id, cart_id, quantity)
   try {
     if (!quantity || quantity < 1) {
       return res.status(400).json({
