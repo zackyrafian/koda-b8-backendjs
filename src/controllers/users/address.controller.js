@@ -1,4 +1,3 @@
-import * as userAddressModel from "../../models/users/address.model.js"
 import sq from '../../models/index.js'
 
 export async function create(req, res) {
