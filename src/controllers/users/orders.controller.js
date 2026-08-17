@@ -161,27 +161,98 @@ export async function getAll(req, res) {
   const limitNum = limit !== undefined ? (parseInt(limit) || 10) : null
   const paginate = pageNum !== null || limitNum !== null
   try { 
-    const result = role === 'ADMIN'
-      ? await ordersModel.findAll(undefined, pageNum, limitNum)
-      : await ordersModel.findAll(user_id, pageNum, limitNum)
-    const { rows, total, totalPages, nextPage, prevPage } = result
+    // const result = role === 'ADMIN'
+    //   ? await ordersModel.findAll(undefined, pageNum, limitNum)
+    //   : await ordersModel.findAll(user_id, pageNum, limitNum)
+    // const { rows, total, totalPages, nextPage, prevPage } = result
 
+    const where = role === 'ADMIN' ? {} : { user_id }
+    const queryOptions = { 
+      where,
+      include: [
+        {
+          model: sq.User, 
+          as: 'user', 
+          attributes: ['id', 'email'], 
+          include: [{ model: sq.UserProfile, as: 'profile', attributes: ['fullname'] }]
+        }, 
+        { 
+          model: sq.UserAddress, 
+          as: 'address'
+        }, 
+        {
+          model: sq.UserOrderItems,
+          as: 'items', 
+          include: [{ model: sq.Products, as: 'product', attributes: ['name']}]
+        },
+        {
+          model: sq.Payments, 
+          as: 'payment',
+          include: [{ model: sq.PaymentMethods, as: 'method', attributes: ['name']}]
+        }
+      ],
+      order: [['created_at', 'DESC']], 
+      ...(paginate && { 
+        limit: limitNum ?? 10, 
+        offset: ((pageNum??1) -1) *(limitNum ?? 10)
+      })
+    }
 
+    const { count, rows } = await sq.UserOrders.findAndCountAll(queryOptions)
+
+    const results = rows.map(order => { 
+      const o = order.toJSON() 
+      return { 
+        id: o.id, 
+        user: { 
+          id: o.user?.id, 
+          email: o.user?.email, 
+          fullname: o.user?.profile?.fullname 
+        }, 
+        user_id: o.user_id,
+        total_price: o.total_price, 
+        status: o.status, 
+        created_at: o.createdAt, 
+        updated_at: o.updatedAt, 
+        address: o.address, 
+        items: o.items?.map(item => ({ 
+          id: item.id, 
+          product_id: item.product_id, 
+          product_name: item.product?.name, 
+          quantity: item.quantity, 
+          price: item.price, 
+          variant: item.variant
+        })), 
+        payment: o.payment ? { 
+          id: o.payment.id, 
+          method: o.payment.method?.name, 
+          va_number: o.payment.va_number, 
+          amount: o.payment.amount,
+          admin_fee: o.admin_fee, 
+          total_amount: o.payment.total_amount, 
+          status: o.payment.status, 
+          expired_at: o.payment.expired_at, 
+          paid_at: o.payment.paid_at
+        }: null 
+      }
+    })
+
+    const totalPages = paginate ? Math.ceil(count / (limitNum ?? 10)) : null 
+    const currentPage = pageNum ?? 1
     res.status(200).json({ 
       "success": true,
       ...(paginate && {
         "data": {
-          "total": total,
-          "page": pageNum,
+          "total": count,
+          "page": currentPage,
           "limit": limitNum,
           "totalPages": totalPages,
-          "nextPage": nextPage,
-          "prevPage": prevPage
+          "nextPage": currentPage < totalPages ? currentPage + 1 : null,
+          "prevPage": currentPage > 1 ? currentPage - 1 : null
         }
       }),
-      "results": rows
+      "results": results
     })
-    console.log(rows)
   } catch (error) { 
     res.status(500).json({ 
       "success": false, 
