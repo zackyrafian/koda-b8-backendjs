@@ -1,4 +1,4 @@
-import * as ordersModel from "../../models/users/orders.model.js"
+import sq from '../../models/index.js'
 
 export async function update(req, res) { 
   const { role } = req.user;  
@@ -28,13 +28,14 @@ export async function update(req, res) {
   }
 
   try { 
-    const order = await ordersModel.updateStatus(orderId, status); 
+    const order = await sq.UserOrders.findByPk(orderId)
     if (!order) { 
       return res.status(404).json({ 
         success: false,
         message: "Order not found", 
       })
     }
+    await order.update({ status })
     return res.status(200).json({
       success: true, 
       message: "Success update status order", 
@@ -47,4 +48,3 @@ export async function update(req, res) {
     })
   }
 }
-
