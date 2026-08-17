@@ -150,7 +150,18 @@ export async function getById(req, res) {
         { model: sq.ProductBrands, as: 'brand' },
         { model: sq.ProductCategories, as: 'category' }, 
         { model: sq.ProductImages, as: 'images' }, 
-        { model: sq.ProductVariants, as: 'variants' }
+        { model: sq.ProductVariants, as: 'variants' },
+        {
+          model: sq.ProductReviews, as: 'reviews',
+          include: {
+            model: sq.User, as: 'user',
+            attributes: ['email'],
+            include: { 
+              model: sq.UserProfile, as: 'profile',
+              attributes: ['fullname']
+            }
+          }
+        },
       ]
     })
     if (!product) { 
@@ -177,6 +188,14 @@ export async function getById(req, res) {
       category: product.category?.name || null, 
       images: product.images?.map(img => img.url) || [], 
       variant: product.variants?.map(v => v.name) || [],
+      reviews: product.reviews?.map(r => ({
+        id: r.id ,
+        rating: r.rating,
+        comment: r.comment, 
+        created_at: r.created_at,
+        fullname: r.user.profile?.fullname || null, 
+        email: r.user?.email || null
+      }))
     }
     res.status(200).json({ 
       "success": true, 
