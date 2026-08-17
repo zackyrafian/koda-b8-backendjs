@@ -1,4 +1,3 @@
-import * as userModel from "../../models/users/profiles.model.js"
 import sq from '../../models/index.js'
 
 export async function getUserProfile(req, res) { 
