@@ -10,7 +10,10 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
+      Payments.belongsTo(models.PaymentMethods, {
+        foreignKey: 'payment_method_id',
+        as: 'method'
+      })
     }
   }
   Payments.init({
