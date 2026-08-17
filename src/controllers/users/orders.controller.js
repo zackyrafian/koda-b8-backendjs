@@ -1,9 +1,4 @@
-import * as ordersModel from "../../models/users/orders.model.js"
-import * as cartModel from "../../models/users/cart.model.js"
-import * as addressModel from "../../models/users/address.model.js"
-import * as paymentModel from "../../models/payment.model.js"
 import generateVA  from "../../utils/va.js"
-import * as usersModel from "../../models/user.model.js"
 import sq from '../../models/index.js'
 
 export async function create(req, res) { 
@@ -42,7 +37,7 @@ export async function create(req, res) {
       sq.UserAddress.findOne({ 
         where: {id: address_id, user_id}
       }),
-      paymentModel.findMethodById(payment_method_id)
+      sq.PaymentMethods.findOne({ where: { id: payment_method_id, is_active: true } })
     ])
     if (!address) { 
       return res.status(404).json({ 
@@ -266,19 +261,86 @@ export async function getOne(req, res) {
   const { userId, role } = req.user
   const user_id = parseInt(userId)
   try { 
-    const order = role === 'ADMIN'
-      ? await ordersModel.findOne(id)
-      : await ordersModel.findOne(id, user_id)
+    // const order = role === 'ADMIN'
+    //   ? await ordersModel.findOne(id)
+    //   : await ordersModel.findOne(id, user_id)
+    // if (!order) { 
+    //   return res.status(404).json({ 
+    //     "success": false, 
+    //     "message": "Order not found"
+    //   })
+    // }
+    // 
+    const where = role === 'ADMIN' ? { id } : { id, user_id }
+    const order = await sq.UserOrders.findOne({ 
+      where,
+      include: [
+        {
+          model: sq.User,
+          as: 'user',
+          attributes: ['id', 'email'],
+          include: [{ model: sq.UserProfile, as: 'profile', attributes: ['fullname'] }]
+        },
+        {
+          model: sq.UserAddress,
+          as: 'address'
+        },
+        {
+          model: sq.UserOrderItems,
+          as: 'items',
+          include: [{ model: sq.Products, as: 'product', attributes: ['name'] }]
+        },
+        {
+          model: sq.Payments,
+          as: 'payment',
+          include: [{ model: sq.PaymentMethods, as: 'method', attributes: ['name'] }]
+        }
+      ]
+    })
     if (!order) { 
       return res.status(404).json({ 
         "success": false, 
         "message": "Order not found"
       })
     }
+    const o = order.toJSON()
+    const result = {
+      id: o.id,
+      user: {
+        id: o.user?.id,
+        email: o.user?.email,
+        fullname: o.user?.profile?.fullname
+      },
+      user_id: o.user_id,
+      total_price: o.total_price,
+      status: o.status,
+      created_at: o.createdAt,
+      updated_at: o.updatedAt,
+      address: o.address,
+      items: o.items?.map(item => ({
+        id: item.id,
+        product_id: item.product_id,
+        product_name: item.product?.name,
+        quantity: item.quantity,
+        price: item.price,
+        variant: item.variant
+      })),
+      payment: o.payment ? {
+        id: o.payment.id,
+        method: o.payment.method?.name,
+        va_number: o.payment.va_number,
+        amount: o.payment.amount,
+        admin_fee: o.payment.admin_fee,
+        total_amount: o.payment.total_amount,
+        status: o.payment.status,
+        expired_at: o.payment.expired_at,
+        paid_at: o.payment.paid_at
+      } : null
+    }
     res.status(200).json({ 
       "success": true, 
       "message": "Success get order detail",
-      "results": order
+      "results": result
     })
   } catch (error) { 
     res.status(500).json({ 
