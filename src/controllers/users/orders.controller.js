@@ -1,5 +1,5 @@
 import generateVA  from "../../utils/va.js"
-import sq from '../../models/index.js'
+import sq, { Sequelize } from '../../models/index.js'
 
 export async function create(req, res) { 
   const io = req.app.get("io")
@@ -87,7 +87,6 @@ export async function create(req, res) {
         price: item.price
       }))
     )
-    
     console.log(JSON.stringify(order, null, 2))
 
     const vaNumber = paymentMethod.va_code ? generateVA(paymentMethod, order.id) : null;
@@ -130,6 +129,15 @@ export async function create(req, res) {
     await sq.UserCart.destroy({
       where: { id: cart_id, user_id }
     })
+
+    await Promise.all(
+      items.map(item => 
+        sq.Products.increment(
+          { sold_out: item.quantity, stock: -item.quantity }, 
+          { where: { id: item.product_id }}
+        )
+      )
+    )
     io.emit("new_orders", { 
       success: true, 
       results: orderData
@@ -178,7 +186,19 @@ export async function getAll(req, res) {
         {
           model: sq.UserOrderItems,
           as: 'items', 
-          include: [{ model: sq.Products, as: 'product', attributes: ['name']}]
+          include: [
+            {
+              model: sq.Products, as: 'product', attributes: ['name'], 
+              include: [ 
+                {
+                  model: sq.ProductVariants, 
+                  as: 'variants', 
+                  attributes: ['id', 'name'], 
+                  required: false,
+                }
+              ]
+            },
+          ]
         },
         {
           model: sq.Payments, 
@@ -216,7 +236,8 @@ export async function getAll(req, res) {
           product_name: item.product?.name, 
           quantity: item.quantity, 
           price: item.price, 
-          variant: item.variant
+          variant: item.variant, 
+          variant_id: item.product?.variants?.find(v => v.name === item.variant)?.id ?? null
         })), 
         payment: o.payment ? { 
           id: o.payment.id, 
