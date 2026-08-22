@@ -1,10 +1,11 @@
-{
+export default {
   "development": {
     "username": "postgres",
     "password": "admin",
     "database": "belimudah",
-    "host": "postgres",
-    "dialect": "postgres"
+    "host": "127.0.0.1",
+    "dialect": "postgres", 
+    "logging": false
   },
   "test": {
     "username": "root",
@@ -14,10 +15,10 @@
     "dialect": "postgres"
   },
   "production": {
-    "username": "postgres",
-    "password": "admin",
-    "database": "belimudah",
-    "host": "postgres",
+    "username": process.env.DB_NAME || "postgres",
+    "password": process.env.DB_NAME || "admin",
+    "database": process.env.DB_NAME|| "belimudah",
+    "host": process.env.DB_HOST || "localhost",
     "dialect": "postgres"
   }
 }
