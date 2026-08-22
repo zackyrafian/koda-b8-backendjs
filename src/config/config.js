@@ -15,10 +15,12 @@ export default {
     "dialect": "postgres"
   },
   "production": {
-    "username": process.env.DB_NAME || "postgres",
-    "password": process.env.DB_NAME || "admin",
-    "database": process.env.DB_NAME|| "belimudah",
+    "username": process.env.DB_USER || "postgres",
+    "password": process.env.DB_PASSWORD || "admin",
+    "database": process.env.DB_NAME || "belimudah",
     "host": process.env.DB_HOST || "localhost",
-    "dialect": "postgres"
+    "port": process.env.DB_PORT || 5432,
+    "dialect": "postgres",
+    "logging": false
   }
 }
