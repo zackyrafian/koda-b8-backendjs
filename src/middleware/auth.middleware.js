@@ -21,7 +21,7 @@ function authMiddleware(req, res, next) {
     try { 
       const token = authHeader.slice(prefix.length)
       const data = libJWT.verify(token)
-      req.user = data 
+      req.user = {...data, userId: parseInt(data.userId)} 
       next()
     } catch (error) { 
       return res.status(401).json({ 
