@@ -23,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
     amount: DataTypes.DECIMAL,
     admin_fee: DataTypes.DECIMAL,
     total_amount: DataTypes.DECIMAL,
-    status: DataTypes.STRING,
+    status: DataTypes.ENUM('PENDING', 'PAID', 'EXPIRED'),
     expired_at: DataTypes.DATE
   }, {
     sequelize,
