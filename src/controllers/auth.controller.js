@@ -1,52 +1,48 @@
 import argon2, { hash } from "argon2"
 import libJWT from "../libs/jwt.js";
-import db from "../models/index.js"
+import sq from "../models/index.js"
 import regex from "../libs/regex.js";
 
-const { User, UserProfile } = db;
-
 export async function register(req, res) { 
+  const { fullname, email, password } = req.body; 
+  const tx = await sq.sequelize.transaction(); 
   try { 
-    console.log(req.body)
-    const { fullname, email, password } = req.body; 
-    const existing = await User.findOne({ 
-      where: { email }
-    })
-
     if (!regex.email.test(email)) { 
+      await tx.rollback()
       return res.status(400).json({
         success: false,
         message: 'failed format email'
       })
     }
+
+    const existing = await sq.User.findOne({ 
+      where: { email },
+      transaction: tx
+    })
     
     if (existing) { 
-      res.status(409).json({ 
+      await tx.rollback()
+      return res.status(409).json({ 
         "success": false, 
         "message": "Email already use."
       })
-      return 
     }
     const hashPassword = await argon2.hash(password)
- 
-    const data = await User.create({ 
-      email: email, 
-      password: hashPassword, 
-      profile: { 
-        fullname: fullname,
-      }
-    }, {
-      include: [{
-        model: db.UserProfile,
-        as: 'profile'
-      }]
-    })
-    console.log(data);
-    res.status(201).json({ 
+    const user = await sq.User.create({ 
+      email, password: hashPassword
+    }, { transaction: tx })
+
+    await sq.UserProfile.create({ 
+      user_id: user.id, 
+      fullname,
+    }, { transaction: tx })
+    await tx.commit();
+    return res.status(201).json({ 
       "success": true, 
       "message": `User Register ${fullname}`
     })
   } catch (error) { 
+    await tx.rollback();
     res.status(500).json({ 
       "success": false, 
       "message": error.message,
@@ -54,7 +50,7 @@ export async function register(req, res) {
   }
 }
 
-export async function loign(req, res) { 
+export async function login(req, res) { 
   try { 
     const { email, password } = req.body; 
     if (!email || !password) {
@@ -64,20 +60,17 @@ export async function loign(req, res) {
       })
     }
 
-    const user = await User.findOne({
+    const user = await sq.User.findOne({
       where: { email }
     })
 
-    // const user = await userModel.findOne("email", email)
     if (!user) { 
-      res.status(400).json({ 
+      return res.status(400).json({ 
         "success": false, 
         "message": "We don't have your email."
       })
-      return
     }
     
-
     const valid = await argon2.verify(user.password, password)
     if (!valid) { 
       return res.status(401).json({

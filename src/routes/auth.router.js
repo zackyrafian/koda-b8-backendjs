@@ -79,6 +79,6 @@ authRouter.post("/register", authController.register)
  *       401:
  *         description: Invalid email or password
  */
-authRouter.post("/login", authController.loign)
+authRouter.post("/login", authController.login)
 
 export default authRouter;
