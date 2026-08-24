@@ -1,6 +1,7 @@
 import argon2, { hash } from "argon2"
 import libJWT from "../libs/jwt.js";
 import db from "../models/index.js"
+import regex from "../libs/regex.js";
 
 const { User, UserProfile } = db;
 
@@ -8,17 +9,17 @@ export async function register(req, res) {
   try { 
     console.log(req.body)
     const { fullname, email, password } = req.body; 
-    // const existing = await userModel.findOne("email", email)
     const existing = await User.findOne({ 
       where: { email }
     })
-    if (email.indexOf('@') === -1) { 
-      res.status(400).json({ 
-        "success": false, 
-        "message": "format email.."
+
+    if (!regex.email.test(email)) { 
+      return res.status(400).json({
+        success: false,
+        message: 'failed format email'
       })
     }
-
+    
     if (existing) { 
       res.status(409).json({ 
         "success": false, 
@@ -27,8 +28,7 @@ export async function register(req, res) {
       return 
     }
     const hashPassword = await argon2.hash(password)
-    // const data = await userModel.create({fullname, email, password: hashPassword})
-    // 
+ 
     const data = await User.create({ 
       email: email, 
       password: hashPassword, 
