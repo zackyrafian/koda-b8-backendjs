@@ -1,9 +1,10 @@
 import generateVA  from "../../utils/va.js"
 import sq, { Sequelize } from '../../models/index.js'
+import { paginationOptions, parsePagination } from "../../utils/pagination.js"
 
 export async function create(req, res) { 
   const io = req.app.get("io")
-  const user_id = parseInt(req.user.userId)
+  const user_id = req.user.userId
   const { cart_id, address_id, payment_method_id } = req.body
 
   const tx = await sq.sequelize.transaction();
@@ -176,18 +177,10 @@ export async function create(req, res) {
 export async function getAll(req, res) { 
   const { userId, role } = req.user
   const user_id = parseInt(userId)
-  const { page, limit } = req.query
-  const pageNum = page !== undefined ? (parseInt(page) || 1) : null
-  const limitNum = limit !== undefined ? (parseInt(limit) || 10) : null
-  const paginate = pageNum !== null || limitNum !== null
+  const { pageNum, limitNum, paginate } = parsePagination(req.query)
   try { 
-    // const result = role === 'ADMIN'
-    //   ? await ordersModel.findAll(undefined, pageNum, limitNum)
-    //   : await ordersModel.findAll(user_id, pageNum, limitNum)
-    // const { rows, total, totalPages, nextPage, prevPage } = result
-
     const where = role === 'ADMIN' ? {} : { user_id }
-    const queryOptions = { 
+    const { count, rows } = await sq.UserOrders.findAndCountAll({
       where,
       include: [
         {
@@ -223,14 +216,9 @@ export async function getAll(req, res) {
           include: [{ model: sq.PaymentMethods, as: 'method', attributes: ['name']}]
         }
       ],
-      order: [['created_at', 'DESC']], 
-      ...(paginate && { 
-        limit: limitNum ?? 10, 
-        offset: ((pageNum??1) -1) *(limitNum ?? 10)
-      })
-    }
-
-    const { count, rows } = await sq.UserOrders.findAndCountAll(queryOptions)
+      order: [['created_at', 'DESC']],
+      ...paginationOptions(pageNum, limitNum, paginate)
+    })
 
     const results = rows.map(order => { 
       const o = order.toJSON() 
@@ -261,7 +249,7 @@ export async function getAll(req, res) {
           method: o.payment.method?.name, 
           va_number: o.payment.va_number, 
           amount: o.payment.amount,
-          admin_fee: o.admin_fee, 
+          admin_fee: o.payment.admin_fee, 
           total_amount: o.payment.total_amount, 
           status: o.payment.status, 
           expired_at: o.payment.expired_at, 
