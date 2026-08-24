@@ -5,13 +5,16 @@ export async function create(req, res) {
   const io = req.app.get("io")
   const user_id = parseInt(req.user.userId)
   const { cart_id, address_id, payment_method_id } = req.body
+
+  const tx = await sq.sequelize.transaction();
+  let orderData = null;
   try { 
-    // const user = await usersModel.findOne("id", user_id)
-    // 
     const user = await sq.User.findByPk(user_id, { 
-      include: [{ model: sq.UserProfile, as: 'profile' }]
+      include: [{ model: sq.UserProfile, as: 'profile' }],
+      transaction: tx
     })
     if (!user) { 
+      await tx.rollback()
       return res.status(404).json({ 
         success: false, 
         message: "user not found."
@@ -19,6 +22,7 @@ export async function create(req, res) {
     }
     
     if (!cart_id || cart_id.length === 0) { 
+      await tx.rollback()
       return res.status(400).json({ 
         "success": false, 
         "message": "cart_id is required"
@@ -26,6 +30,7 @@ export async function create(req, res) {
     }
 
     if (!address_id) { 
+      await tx.rollback()
       return res.status(400).json({ 
         "success": false, 
         "message": "address_id is required"
@@ -33,25 +38,41 @@ export async function create(req, res) {
     }
 
     const [address, paymentMethod] = await Promise.all([
-      // addressModel.findOne(user_id, 'id', address_id),
       sq.UserAddress.findOne({ 
-        where: {id: address_id, user_id}
+        where: {id: address_id, user_id},
+        transaction: tx
       }),
-      sq.PaymentMethods.findOne({ where: { id: payment_method_id, is_active: true } })
+      sq.PaymentMethods.findOne({ where: { id: payment_method_id, is_active: true }, transaction: tx })
     ])
     if (!address) { 
+      await tx.rollback()
       return res.status(404).json({ 
         "success": false, 
         "message": "Address not found"
       })
     }
-    // const cart_items = await cartModel.findById(cart_id, user_id)
+    if (!paymentMethod) {
+      await tx.rollback()
+      return res.status(404).json({
+        "success": false,
+        "message": "Payment method not found"
+      })
+    }
+
     const cart_items = await sq.UserCart.findAll({ 
       where: { user_id, id: cart_id }, 
       include: [{ model: sq.Products, as: 'products' }],
+      transaction: tx
     })
 
-    // console.log(JSON.stringify(cart_items, null, 2))
+    if (cart_items.length === 0) { 
+      await tx.rollback()
+      return res.status(404).json({ 
+        "success": false, 
+        "message": "No cart items found"
+      })
+    }
+
     const items = cart_items.map(item => ({ 
       id: item.id, 
       user_id: item.user_id, 
@@ -60,24 +81,17 @@ export async function create(req, res) {
       quantity: item.quantity, 
       price: item.products?.price
     }))
-    
-    
-    if (cart_items.length === 0) { 
-      return res.status(404).json({ 
-        "success": false, 
-        "message": "No cart items found"
-      })
-    }
 
     const total_price = cart_items.reduce((sum, item) => {
      return sum + (Number(item.products.price) * item.quantity) 
     }, 0)
-    // const order = await ordersModel.create(user_id, address_id, cart_items)
+
     const order = await sq.UserOrders.create({ 
       user_id, 
       address_id, 
       total_price,
-    })
+    }, { transaction: tx })
+
     await sq.UserOrderItems.bulkCreate( 
       items.map(item => ({ 
         order_id: order.id, 
@@ -85,9 +99,9 @@ export async function create(req, res) {
         variant: item.variant, 
         quantity: item.quantity, 
         price: item.price
-      }))
+      })),
+      { transaction: tx }
     )
-    console.log(JSON.stringify(order, null, 2))
 
     const vaNumber = paymentMethod.va_code ? generateVA(paymentMethod, order.id) : null;
     const totalAmount = Number(order.total_price) + Number(paymentMethod.admin_fee)
@@ -100,9 +114,9 @@ export async function create(req, res) {
       admin_fee: paymentMethod.admin_fee,
       total_amount: totalAmount,
       expired_at: new Date(Date.now() + 24 * 3600 * 1000)
-    })
+    }, { transaction: tx })
 
-    const orderData = {
+    orderData = {
       ...order.toJSON(),
       user: {
         email: user.email, 
@@ -124,35 +138,38 @@ export async function create(req, res) {
       }))
     }      
     
-    // await cartModel.deleteById(cart_id, user_id)
-    
     await sq.UserCart.destroy({
-      where: { id: cart_id, user_id }
+      where: { id: cart_id, user_id },
+      transaction: tx
     })
 
     await Promise.all(
       items.map(item => 
         sq.Products.increment(
           { sold_out: item.quantity, stock: -item.quantity }, 
-          { where: { id: item.product_id }}
+          { where: { id: item.product_id }, transaction: tx }
         )
       )
     )
-    io.emit("new_orders", { 
-      success: true, 
-      results: orderData
-    })
-    res.status(201).json({ 
-      "success": true, 
-      "message": "Order created successfully",
-      "results": orderData,
-    })
+
+    await tx.commit()
   } catch (error) { 
-    res.status(500).json({ 
+    await tx.rollback()
+    return res.status(500).json({ 
       "success": false, 
       "message": error.message
     })
   }
+
+  io.emit("new_orders", { 
+    success: true, 
+    results: orderData
+  })
+  res.status(201).json({ 
+    "success": true, 
+    "message": "Order created successfully",
+    "results": orderData,
+  })
 }
 
 
