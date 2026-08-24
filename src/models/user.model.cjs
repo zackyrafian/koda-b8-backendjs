@@ -2,6 +2,7 @@
 const {
   Model
 } = require('sequelize');
+const argon2 = require('argon2');
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     /**
@@ -37,6 +38,13 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'User',
     tableName: 'users',
     underscored: true,
+    hooks: { 
+      beforeSave: async (user) => { 
+        if (user.changed("password")) { 
+          user.password = await argon2.hash(user.password)
+        }
+      }
+    }
   });
   return User;
 };
