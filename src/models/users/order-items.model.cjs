@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
     product_id: DataTypes.INTEGER,
     quantity: DataTypes.INTEGER,
     variant: DataTypes.STRING,
-    price: DataTypes.INTEGER(10, 2)
+    price: DataTypes.DECIMAL(10, 2)
   }, {
     sequelize,
     modelName: 'UserOrderItems',
