@@ -20,8 +20,13 @@ module.exports = (sequelize, DataTypes) => {
     user_id: DataTypes.INTEGER,
     fullname: DataTypes.STRING,
     phone_number: DataTypes.STRING,
-    date_of_birth: DataTypes.DATEONLY,
-    gender: DataTypes.ENUM('LAKI-LAKI', 'PEREMPUAN', 'OTHER'),
+    date_of_birth: DataTypes.STRING,
+    gender: {
+      type: DataTypes.STRING,
+      validate: {
+        isIn: [['LAKI-LAKI', 'PEREMPUAN', 'OTHER']],
+      },
+    },
     image_profile: DataTypes.STRING
   }, {
     sequelize,

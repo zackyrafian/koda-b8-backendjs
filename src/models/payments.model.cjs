@@ -23,14 +23,20 @@ module.exports = (sequelize, DataTypes) => {
     amount: DataTypes.DECIMAL,
     admin_fee: DataTypes.DECIMAL,
     total_amount: DataTypes.DECIMAL,
-    status: DataTypes.ENUM('PENDING', 'PAID', 'EXPIRED'),
-    expired_at: DataTypes.DATE
+    status: {
+      type: DataTypes.STRING,
+      defaultValue: 'PENDING',
+      validate: {
+        isIn: [['PENDING', 'PAID', 'EXPIRED']],
+      },
+    },
+    expired_at: DataTypes.DATE,
+    paid_at: DataTypes.DATE
   }, {
     sequelize,
     modelName: 'Payments',
     tableName: 'payments',
     underscored: true,
-    updatedAt: false,
   });
   return Payments;
 };

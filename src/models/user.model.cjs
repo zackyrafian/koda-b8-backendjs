@@ -15,9 +15,23 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'user_id', 
         as: 'profile'
       })
-      User.hasOne(models.ProductReviews, { 
+      User.hasMany(models.ProductReviews, { 
         foreignKey: 'user_id', 
         as: 'reviews'
+      })
+      User.belongsToMany(models.Products, { 
+        through: models.UserCart, 
+        as: 'cart_products', 
+        foreignKey: 'user_id',
+        otherKey: 'product_id'
+      })
+      User.hasMany(models.UserOrders, { 
+        foreignKey: 'user_id', 
+        as: 'orders'
+      })
+      User.hasMany(models.UserAddress, { 
+        foreignKey: 'user_id', 
+        as: 'addresses'
       })
     }
   }
@@ -31,7 +45,15 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
-    password: DataTypes.STRING,
+    password: { 
+      type: DataTypes.STRING, 
+      validate: { 
+        len: { 
+          args: [8, 100],
+          msg: "Password must be at least 8 characters long."
+        }
+      }
+    },
     role: DataTypes.STRING
   }, {
     sequelize,

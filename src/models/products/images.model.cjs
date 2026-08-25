@@ -24,7 +24,6 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'ProductImages',
     tableName: 'product_images',
     underscored: true,
-    updatedAt: false,
   });
   return ProductImages;
 };

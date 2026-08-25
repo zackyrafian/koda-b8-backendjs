@@ -27,7 +27,6 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'PaymentMethods',
     tableName: 'payment_methods',
     underscored: true, 
-    updatedAt: false,
   });
   return PaymentMethods;
 };

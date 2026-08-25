@@ -24,7 +24,6 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'ProductVariants',
     tableName: 'product_variants',
     underscored: true, 
-    updatedAt: false,
   });
   return ProductVariants;
 };

@@ -19,7 +19,6 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'UserWishlists',
     tableName: 'user_wishlists',
     underscored: true,
-    updatedAt: false,
   });
   return UserWishlists;
 };

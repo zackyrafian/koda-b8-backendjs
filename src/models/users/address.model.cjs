@@ -20,11 +20,19 @@ module.exports = (sequelize, DataTypes) => {
     user_id: DataTypes.INTEGER,
     recipient_name: DataTypes.STRING,
     phone_number: DataTypes.STRING,
-    recipient_email: DataTypes.STRING,
+    recipient_email: { 
+      type: DataTypes.STRING, 
+      validate: { 
+        isEmail: true,
+      }
+    },
     recipient_address_full: DataTypes.STRING,
     recipient_city: DataTypes.STRING,
     recipient_province: DataTypes.STRING,
-    zip_code: DataTypes.STRING
+    zip_code: { 
+      type: DataTypes.STRING, 
+      validate: { is: /^[0-9]{5}$/}
+    }
   }, {
     sequelize,
     modelName: 'UserAddress',

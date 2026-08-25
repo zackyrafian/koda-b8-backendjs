@@ -27,7 +27,6 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'UserOrderItems',
     tableName: 'user_order_items',
     underscored: true,
-    updatedAt: false,
   });
   return UserOrderItems;
 };
