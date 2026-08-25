@@ -19,7 +19,10 @@ module.exports = (sequelize, DataTypes) => {
   UserCart.init({
     user_id: DataTypes.INTEGER,
     product_id: DataTypes.INTEGER,
-    quantity: DataTypes.INTEGER,
+    quantity: { 
+      type: DataTypes.INTEGER, 
+      validate: { min: 1 }
+    },
     variant: DataTypes.STRING
   }, {
     sequelize,
