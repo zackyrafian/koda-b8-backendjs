@@ -1,7 +1,5 @@
 'use strict';
 
-const now = new Date();
-
 const products = [
   ['Headphone Wireless Premium', 1, 1, 650000, 120, 0, 156, 'Nikmati pengalaman mendengar yang superior dengan Headphone Wireless Premium dari SoundWare.'],
   ['Mouse Gaming RGB Pro', 2, 5, 350000, 120, 10, 89, 'Tingkatkan permainan Anda dengan Mouse Gaming RGB Pro dari LogiTech.'],
@@ -53,49 +51,69 @@ const products = [
   ['Keyboard Wireless Multi-Device', 2, 3, 450000, 75, 10, 160, 'Keyboard nirkabel yang terhubung ke 3 perangkat sekaligus.'],
   ['Headset Gaming Budget RGB', 5, 5, 250000, 160, 20, 340, 'Headset gaming ekonomis dengan lampu LED menarik.'],
   ['Mouse Gaming Pro Wireless', 6, 5, 1150000, 45, 10, 125, 'Mouse gaming nirkabel profesional dengan sensor super akurat.'],
-].map(([name, brand_id, category_id, price, stock, discount, sold_out, description]) => ({
-  name,
-  brand_id,
-  category_id,
-  price,
-  stock,
-  discount,
-  sold_out,
-  description,
-  created_at: now,
-  updated_at: now,
-}));
+];
 
 const productVariants = [
-  [1, 'Hitam'],
-  [1, 'Putih'],
-  [1, 'Biru'],
-  [2, 'Hitam'],
-  [2, 'Putih'],
-  [3, 'Hitam'],
-  [3, 'Putih'],
-  [4, 'RGB Blue Switch'],
-  [4, 'RGB Red Switch'],
-  [5, 'Hitam'],
-  [6, 'Silver'],
-  [12, 'Hitam'],
-  [12, 'Abu-abu'],
-].map(([product_id, name]) => ({
-  product_id,
-  name,
-  created_at: now,
-  updated_at: now,
-}));
+  ['Headphone Wireless Premium', 'Hitam'],
+  ['Headphone Wireless Premium', 'Putih'],
+  ['Headphone Wireless Premium', 'Biru'],
+  ['Mouse Gaming RGB Pro', 'Hitam'],
+  ['Mouse Gaming RGB Pro', 'Putih'],
+  ['Keyboard Mechanical RGB TKL', 'Hitam'],
+  ['Keyboard Mechanical RGB TKL', 'Putih'],
+  ['Speaker Bluetooth Portable', 'RGB Blue Switch'],
+  ['Speaker Bluetooth Portable', 'RGB Red Switch'],
+  ['Webcam HD 1080p Autofocus', 'Hitam'],
+  ['External SSD 1TB NVMe', 'Silver'],
+  ['Microphone Condenser USB', 'Hitam'],
+  ['Microphone Condenser USB', 'Abu-abu'],
+];
 
 /** @type {import('sequelize-cli').Seeder} */
 module.exports = {
   async up(queryInterface) {
-    await queryInterface.bulkInsert('products', products);
-    await queryInterface.bulkInsert('product_variants', productVariants);
+    const cols = 8;
+    const productValues = products
+      .map((_, r) => `(${Array.from({ length: cols }, (_, c) => `$${r * cols + c + 1}`).join(', ')})`)
+      .join(', ');
+    const binds = products.flat();
+
+    await queryInterface.sequelize.query(
+      `INSERT INTO products (name, brand_id, category_id, price, stock, discount, sold_out, description)
+       SELECT v.name, v.brand_id::int, v.category_id::int, v.price::numeric, v.stock::int, v.discount::int, v.sold_out::int, v.description
+       FROM (VALUES ${productValues}) AS v(name, brand_id, category_id, price, stock, discount, sold_out, description)
+       WHERE NOT EXISTS (SELECT 1 FROM products p WHERE p.name = v.name)`,
+      { bind: binds }
+    );
+
+    const variantValues = productVariants
+      .map((_, i) => `($${i * 2 + 1}, $${i * 2 + 2})`)
+      .join(', ');
+    await queryInterface.sequelize.query(
+      `INSERT INTO product_variants (product_id, name, created_at, updated_at)
+       SELECT p.id, v.vname, NOW(), NOW()
+       FROM (VALUES ${variantValues}) AS v(pname, vname)
+       JOIN products p ON p.name = v.pname
+       WHERE NOT EXISTS (
+         SELECT 1 FROM product_variants pv
+         WHERE pv.product_id = p.id AND pv.name = v.vname
+       )`,
+      { bind: productVariants.flat() }
+    );
   },
 
   async down(queryInterface) {
-    await queryInterface.bulkDelete('product_variants', null, {});
-    await queryInterface.bulkDelete('products', null, {});
+    const names = products.map((p) => p[0]);
+    const values = names.map((_, i) => `$${i + 1}`).join(', ');
+
+    await queryInterface.sequelize.query(
+      `DELETE FROM product_variants pv USING products p
+       WHERE pv.product_id = p.id AND p.name IN (${values})`,
+      { bind: names }
+    );
+    await queryInterface.sequelize.query(
+      `DELETE FROM products WHERE name IN (${values})`,
+      { bind: names }
+    );
   },
 };
