@@ -1,8 +1,7 @@
-import * as paymentMetode from "../models/payment.model.js"
-
+import sq from "../models/index.js"
 export async function getAll(req, res) {
   try { 
-    const payments = await paymentMetode.findAll()
+    const payments = await sq.PaymentMethods.findAll()
     res.status(200).json({ 
       "success": true, 
       "results": payments
