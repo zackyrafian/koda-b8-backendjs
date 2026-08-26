@@ -23,28 +23,18 @@ export async function create(req, res) {
     zip_code
   }
   try { 
-    // const address = await userAddressModel.create(user_id, request)
-    // console.log(address)
-    // res.status(200).json({ 
-    //   "success": true, 
-    //   "message": "Success added address.",
-    //   "result": { 
-    //     id: address.id
-    //   }
-    // })
-    // 
-    // 
-    if (!sq.User.findByPk(user_id)) { 
+    const user = await sq.User.findByPk(user_id);
+    if (!user) { 
       return res.status(404).json({ 
-        success: false,
-        message: "User Not found"
+        success: false, 
+        message: "User not found."
       })
     }
     
     const address = await sq.UserAddress.create(request)
 
     res.status(201).json({ 
-      success: false, 
+      success: true, 
       message: "Success added address", 
       result: { 
         id: address.id
@@ -61,25 +51,9 @@ export async function create(req, res) {
 export async function getAll(req, res) { 
   const user_id = req.user.userId 
   try { 
-    // const address = await userAddressModel.findAll(user_id)
-    // if (!address) { 
-    //   res.status(404).json({ 
-    //     "success": false, 
-    //     "message": "-> 404"
-    //   })
-    //   return
-    // } 
-    // 
     const address = await sq.UserAddress.findAll({
       where: { user_id }
     })
-    if (!address) { 
-      res.status(404).json({ 
-        "success": false, 
-        "message": "-> 404"
-      })
-      return
-    } 
     res.status(200).json({ 
       "success": true, 
       "results": address
@@ -103,9 +77,7 @@ export async function getById(req, res) {
     return
   }
   try { 
-    // const address = await userAddressModel.findOne(user_id, "id", id)
-   
-    const address = await sq.UserProfile.findOne({
+    const address = await sq.UserAddress.findOne({
       where: { id, user_id }, 
     })
 
@@ -132,8 +104,6 @@ export async function remove (req, res) {
   const user_id = parseInt(req.user.userId)
 
   try {
-    // await userAddressModel.deleteById(userId, id)
-    // 
     const address = await sq.UserAddress.destroy({ 
       where: { id, user_id }
     })
@@ -191,9 +161,6 @@ export async function update(req, res) {
   }
 
   try {
-    // const address = await userAddressModel.update(userId, id, data)
-    // 
-    // 
     const [updated] = await sq.UserAddress.update(data, { 
       where: { 
         id: id, 
