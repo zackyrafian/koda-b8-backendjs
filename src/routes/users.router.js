@@ -58,7 +58,7 @@ usersRouter.get("/profile", authMiddleware, userProfileController.getUserProfile
  *       401:
  *         description: Unauthorized
  */
-usersRouter.patch("/profile", uploadMiddleware("picture"), authMiddleware, userProfileController.profileImage)
+usersRouter.patch("/profile", authMiddleware, uploadMiddleware("picture"), userProfileController.profileImage)
 
 /**
  * @swagger
