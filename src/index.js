@@ -8,10 +8,6 @@ import 'dotenv/config'
 import corsMiddleware from "./middleware/cors.middleware.js";
 import { createRequire } from "module";
 import swaggerSpec from "./config/swagger.js";
-import db from './models/index.js'
-
-const { User } = db
-
 
 const require = createRequire(import.meta.url);
 const swaggerUi = require("swagger-ui-express");
@@ -64,7 +60,7 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 app.use(router)
 
 
-const PORT = 2222; 
+const PORT = process.env.PORT || 2222; 
 socket.listen(PORT, () => { 
   console.log(`Server Running PORT ${PORT}`)
 })
