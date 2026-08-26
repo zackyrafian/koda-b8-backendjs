@@ -7,7 +7,11 @@ export const pool = new Pool({
   port: process.env.DB_PORT || "5432", 
   user: process.env.DB_USER || "postgres", 
   password: process.env.DB_PASSWORD || "admin", 
-  database: process.env.DB_NAME || "belimudah"
+  database: process.env.DB_NAME || "belimudah",
+  max: 5,
+  min: 0,
+  idleTimeoutMillis: 10000, 
+  connectionTimeoutMillis: 30000
 })
 
 pool.on("error", (error) => { 
