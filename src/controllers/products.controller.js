@@ -1,5 +1,5 @@
 import qs from "qs"
-import sq, { Sequelize } from "../models/index.js"
+import sq from "../models/index.js"
 import { paginationMeta, paginationOptions, parsePagination } from "../utils/pagination.js"
 import { sendSuccess } from "../utils/response.js"
 
@@ -42,6 +42,7 @@ export async function getAll(req, res) {
     
     const queryOptions = { 
       where, 
+      distinct: true,
       include: [ 
         { model: sq.ProductBrands, as: 'brand', where: brandWhere },
         { model: sq.ProductCategories, as: 'category', where: categoryWhere },
