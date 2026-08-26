@@ -2,7 +2,6 @@ import sq from '../../models/index.js'
 
 export async function getUserProfile(req, res) { 
   const user_id = parseInt(req.user.userId)
-  // const user = await userModel.findProfile(user_id)
   try { 
     const user = await sq.User.findByPk(user_id, {
       attributes: { 
@@ -14,6 +13,13 @@ export async function getUserProfile(req, res) {
       }]
     })
 
+    if (!user) { 
+      return res.status(404).json({
+        success: false,
+        message: `User not found.`
+      })
+    }
+
     const response = {
       ...user.toJSON(),
       fullname: user.profile?.fullname || null, 
@@ -24,13 +30,6 @@ export async function getUserProfile(req, res) {
       profile: undefined
     }
     
-    // if (!user) {
-    //   res.status(404).json({
-    //     "success": false,
-    //     "message": `404 -> ${user_id}`
-    //   })
-    //   return;
-    // }
     res.status(200).json({ 
       status: true, 
       message: "Successfully get users profile",
@@ -49,15 +48,6 @@ export async function profileImage(req, res) {
   const { file } = req 
   const { body } = req; 
   try { 
-    // await userModel.updateProfile(user_id, {
-    //   fullname: body.full_name,
-    //   email: body.email,
-    //   phone_number: body.phone_number,
-    //   date_of_birth: body.date_of_birth,
-    //   gender: body.gender,
-    //   picture_path: file?.path,
-    // })
-
       await sq.User.update(
         { email: body.email },
         { where: { id: user_id } }
