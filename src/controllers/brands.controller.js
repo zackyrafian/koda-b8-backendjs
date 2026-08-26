@@ -1,34 +1,29 @@
-import * as brandsModels from "../models/brands.model.js"
+import sq from "../models/index.js"
+import { sendError, sendNotFound, sendSuccess } from "../utils/response.js";
 
 export async function getAll(req, res) {
   try { 
-    const brands = await brandsModels.findAll()
-    res.status(200).json({ 
-      "success": true, 
-      "results": brands
+    const brands = await sq.ProductBrands.findAll({
+      attributes: { exclude: ['createdAt', 'updatedAt']}
+    }); 
+    return sendSuccess(res, 202, {
+      results: brands,
     })
   } catch (error) { 
-    res.status(500).json({ 
-      "success": false, 
-      "message": error.message,
-    })
+    return sendError(res, 500, "Internal Server Error")
   }
 }
 
 export async function getById(req, res) { 
   const { id } = req.params
   try { 
-    const brand = await brandsModels.findOne("id", id)
-    if (!brand) { 
-      res.status(400).json({ 
-        "success": false, 
-        "message": `Brand id ${id} not found.`
-      })
-      return 
-    }
+    const brand = await sq.ProductBrands.findOne({
+      where: { id },
+      attributes: { exclude: ['createdAt', 'updatedAt'] }
+    })
     res.status(200).json({
       "success": true, 
-      "data": brand,
+      "results": brand,
     })
   } catch (error) { 
     res.status(500).json({ 
@@ -47,11 +42,15 @@ export async function create(req, res) {
         "message": "Required name"
       })
     }
-    const brand = await brandsModels.create(name) 
+    const brand = await sq.ProductBrands.create({ name })
     res.status(201).json({ 
       "success": true, 
       "messsage": `Successfully added ${brand.name}`,
-      "result": brand
+      "result": {
+        id: brand.id, 
+        name: brand.name,
+        created_at: brand.createdAt
+      }
     })
   } catch (error) { 
     res.status(500).json({ 
@@ -63,15 +62,13 @@ export async function create(req, res) {
 
 export async function remove(req, res) { 
   const { id } = req.params; 
-  const brand = brandsModels.remove(id)
-  console.log(brandRouter)
-  
   try { 
+    const brand = await sq.ProductBrands.destroy({ 
+      where: { id }
+    })
+
     if (!brand) { 
-      res.status(404).json({ 
-        "success": false, 
-        "message" : `Brand with ${id} not found.`
-      })
+      sendNotFound(res, `Brand ID: ${id} not found.`)
     }
 
     res.status(200).json({ 
@@ -97,7 +94,9 @@ export async function edit(req, res) {
       })
       return
     }
-    const brand = await brandsModels.edit(id, name)
+    const brand = await sq.ProductBrands.update({ name },{ 
+      where: { id }
+    })
     if (!brand) { 
       res.status(404).json({ 
         "success": false, 
