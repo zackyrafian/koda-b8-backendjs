@@ -1,15 +1,17 @@
 import generateVA  from "../../utils/va.js"
 import sq, { Sequelize } from '../../models/index.js'
-import { paginationOptions, parsePagination } from "../../utils/pagination.js"
+import { paginationMeta, paginationOptions, parsePagination } from "../../utils/pagination.js"
+import { sendSuccess } from "../../utils/response.js"
 
 export async function create(req, res) { 
   const io = req.app.get("io")
   const user_id = req.user.userId
   const { cart_id, address_id, payment_method_id } = req.body
 
-  const tx = await sq.sequelize.transaction();
+  let tx;
   let orderData = null;
   try { 
+    tx = await sq.sequelize.transaction();
     const user = await sq.User.findByPk(user_id, { 
       include: [{ model: sq.UserProfile, as: 'profile' }],
       transaction: tx
@@ -155,7 +157,7 @@ export async function create(req, res) {
 
     await tx.commit()
   } catch (error) { 
-    await tx.rollback()
+    if (tx) await tx.rollback()
     return res.status(500).json({ 
       "success": false, 
       "message": error.message
@@ -180,7 +182,7 @@ export async function getAll(req, res) {
   const { pageNum, limitNum, paginate } = parsePagination(req.query)
   try { 
     const where = role === 'ADMIN' ? {} : { user_id }
-    const { count, rows } = await sq.UserOrders.findAndCountAll({
+    const queryOptions = { 
       where,
       include: [
         {
@@ -218,7 +220,9 @@ export async function getAll(req, res) {
       ],
       order: [['created_at', 'DESC']],
       ...paginationOptions(pageNum, limitNum, paginate)
-    })
+    }
+    const { count, rows } = await
+      sq.UserOrders.findAndCountAll(queryOptions)
 
     const results = rows.map(order => { 
       const o = order.toJSON() 
@@ -258,21 +262,11 @@ export async function getAll(req, res) {
       }
     })
 
-    const totalPages = paginate ? Math.ceil(count / (limitNum ?? 10)) : null 
-    const currentPage = pageNum ?? 1
-    res.status(200).json({ 
-      "success": true,
-      ...(paginate && {
-        "data": {
-          "total": count,
-          "page": currentPage,
-          "limit": limitNum,
-          "totalPages": totalPages,
-          "nextPage": currentPage < totalPages ? currentPage + 1 : null,
-          "prevPage": currentPage > 1 ? currentPage - 1 : null
-        }
-      }),
-      "results": results
+    const pagination = paginationMeta(count, pageNum, limitNum, paginate)
+
+    sendSuccess(res, 200, { 
+      ...(paginate && { "data": pagination }),
+     results
     })
   } catch (error) { 
     res.status(500).json({ 
