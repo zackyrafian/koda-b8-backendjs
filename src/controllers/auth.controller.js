@@ -6,11 +6,11 @@ import { sendBadRequest, sendError, sendSuccess } from "../utils/response.js";
 
 export async function register(req, res) { 
   const { fullname, email, password } = req.body; 
-  const tx = await sq.sequelize.transaction(); 
+  const missing = requireFields(req.body, ["fullname", "email", "password"]); 
+  if (missing) return sendBadRequest(res, `Missing fields: ${missing.join(", ")}`)
+  let tx;
   try { 
-    const missing = requireFields(req.body, ["fullname", "email", "password"]); 
-    if (missing) return sendBadRequest(res, `Missing fields: ${missing.join(", ")}`)
-    
+    tx = await sq.sequelize.transaction(); 
     const user = await sq.User.create({ 
       email, password,
     }, { transaction: tx })
@@ -22,12 +22,15 @@ export async function register(req, res) {
     await tx.commit();
     return sendSuccess(res, 201, { message: `User Register ${fullname}` })
   } catch (error) { 
-    await tx.rollback();
+    if (tx) await tx.rollback();
     if (error instanceof Sequelize.UniqueConstraintError) { 
       return sendError(res, 409, "Email already exsists.")
     }
     if (error instanceof Sequelize.ValidationError) { 
       return sendBadRequest(res, error.errors[0].message)
+    }
+    if (error instanceof Sequelize.ValidationError) { 
+      return sendBadRequest(res, error.errors[1].message)
     }
     return sendError(res, 500, error.message)
   }
