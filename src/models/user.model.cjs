@@ -29,40 +29,63 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'user_id', 
         as: 'orders'
       })
-      User.hasMany(models.UserAddress, { 
-        foreignKey: 'user_id', 
+      User.hasMany(models.UserAddress, {
+        foreignKey: 'user_id',
         as: 'addresses'
+      })
+      User.belongsTo(models.Roles, {
+        foreignKey: 'role_id',
+        as: 'role_ref'
       })
     }
   }
   User.init({
-    email: { 
+    email: {
       type: DataTypes.STRING,
-      unique: true, 
-      validate: { 
-        isEmail: { 
+      allowNull: false,
+      unique: true,
+      validate: {
+        isEmail: {
           msg: "Invalid email format."
         }
       }
     },
-    password: { 
-      type: DataTypes.STRING, 
-      validate: { 
-        len: { 
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        len: {
           args: [8, 100],
           msg: "Password must be at least 8 characters long."
         }
       }
     },
-    role: DataTypes.STRING
+    role: {
+      type: DataTypes.STRING,
+      defaultValue: 'USER',
+      validate: {
+        isIn: [['ADMIN', 'USER']],
+      },
+    },
+    role_id: DataTypes.INTEGER
   }, {
     sequelize,
     modelName: 'User',
     tableName: 'users',
     underscored: true,
-    hooks: { 
-      beforeSave: async (user) => { 
-        if (user.changed("password")) { 
+    hooks: {
+      beforeValidate: async (user) => {
+        if (user.email) user.email = user.email.toLowerCase()
+      },
+      beforeCreate: async (user) => {
+        const roleName = user.role || 'USER'
+        const [role] = await user.sequelize.models.Roles.findOrCreate({
+          where: { name: roleName }
+        })
+        user.role_id = role.id
+      },
+      beforeSave: async (user) => {
+        if (user.changed("password")) {
           user.password = await argon2.hash(user.password)
         }
       }

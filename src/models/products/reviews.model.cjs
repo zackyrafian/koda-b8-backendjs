@@ -10,9 +10,17 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      ProductReviews.belongsTo(models.User, { 
-        foreignKey: 'user_id', 
+      ProductReviews.belongsTo(models.User, {
+        foreignKey: 'user_id',
         as: 'user'
+      })
+      ProductReviews.belongsTo(models.Products, {
+        foreignKey: 'product_id',
+        as: 'product'
+      })
+      ProductReviews.belongsTo(models.ProductVariants, {
+        foreignKey: 'variant_id',
+        as: 'variant'
       })
     }
   }
@@ -20,7 +28,13 @@ module.exports = (sequelize, DataTypes) => {
     product_id: DataTypes.INTEGER,
     variant_id: DataTypes.INTEGER,
     user_id: DataTypes.INTEGER,
-    rating: DataTypes.DECIMAL,
+    rating: {
+      type: DataTypes.DECIMAL,
+      validate: {
+        min: 1,
+        max: 5,
+      },
+    },
     comment: DataTypes.STRING
   }, {
     sequelize,

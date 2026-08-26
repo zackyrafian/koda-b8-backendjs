@@ -18,9 +18,22 @@ module.exports = (sequelize, DataTypes) => {
   }
   UserProfile.init({
     user_id: DataTypes.INTEGER,
-    fullname: DataTypes.STRING,
-    phone_number: DataTypes.STRING,
-    date_of_birth: DataTypes.STRING,
+    fullname: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    phone_number: {
+      type: DataTypes.STRING,
+      validate: {
+        is: /^[0-9+\-]{9,15}$/,
+      },
+    },
+    date_of_birth: {
+      type: DataTypes.STRING,
+      validate: {
+        isDate: true,
+      },
+    },
     gender: {
       type: DataTypes.STRING,
       validate: {
